@@ -2,32 +2,24 @@ import os
 from dotenv import load_dotenv
 from prefect import flow
 
-# Import dei task dalle cartelle corrette 
+# Import dei task
 from etl.tasks.bronze import ingest_all_raw_data
-# Una volta pronti, importerai anche questi:
-# from etl.tasks.silver import clean_olist_data
-# from etl.tasks.gold import build_olist_star_schema
+from etl.tasks.silver import clean_olist_data
 
-# Carica le variabili d'ambiente (.env) 
 load_dotenv()
-DB_PATH = os.getenv("DB_PATH")
+DB_PATH = os.getenv("DB_PATH", "data/warehouse.duckdb")
 
-@flow(name="Brazilian E-Commerce")
+@flow(name="Brazilian E-Commerce Pipeline")
 def main_flow():
-    """
-    Orchestra il ciclo di vita del dato: Sorgente -> Bronze -> Silver -> Gold [cite: 2, 80]
-    """
-    
-    # 1. STEP BRONZE: Ingestione Raw [cite: 81, 82]
+    # 1. BRONZE (fase raw)
     print("--- Avvio Fase Bronze ---")
-    status_bronze = ingest_all_raw_data(DB_PATH)
-    print(f"[OK] {status_bronze}")
+    ingest_all_raw_data(DB_PATH)
 
-    # 2. STEP SILVER: Pulizia e Tipizzazione [cite: 84, 85]
-    # In futuro: status_silver = clean_olist_data(DB_PATH)
+    # 2. SILVER (pulizia e tipizzazione dati)
+    print("--- Avvio Fase Silver ---")
+    clean_olist_data(DB_PATH)
     
-    # 3. STEP GOLD: Fact & Dimension Tables (Star Schema) [cite: 88, 89]
-    # In futuro: status_gold = build_olist_star_schema(DB_PATH)
+    print("--- PIPELINE COMPLETATA CON SUCCESSO ---")
 
 if __name__ == "__main__":
     main_flow()

@@ -1,1 +1,14 @@
+# Python bytecode
+**/__pycache__/
+*.py[cod]
+
+# Database DuckDB
+*.duckdb
+*.duckdb.wal
+
+# Ambiente e variabili
 .env
+.venv/
+
+# Prefect
+.prefect/

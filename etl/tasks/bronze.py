@@ -3,32 +3,32 @@ import duckdb
 import os
 from prefect import task
 
-@task(name="Ingest All Olist CSVs")
-def ingest_all_raw_data(db_path: str):
-    """
-    Legge tutti i CSV dalla cartella data/raw e li carica nello schema Bronze di DuckDB.
-    """
-    raw_dir = os.path.join("data", "raw")
-    conn = duckdb.connect(db_path)
+@task(name="Ingest All CSVs to Bronze")
+def ingest_all_raw_data(db_path):
+    datasets = [
+        "olist_orders_dataset.csv",
+        "olist_order_items_dataset.csv",
+        "olist_products_dataset.csv",
+        "olist_customers_dataset.csv",
+        "olist_sellers_dataset.csv"
+    ]
     
-    # Crea lo schema bronze come richiesto [cite: 77]
-    conn.execute("CREATE SCHEMA IF NOT EXISTS bronze;")
+    # Ricavo la cartella dal percorso del database
+    db_dir = os.path.dirname(db_path)
+    if db_dir and not os.path.exists(db_dir):
+        os.makedirs(db_dir)
+        print(f"Cartella {db_dir} creata.")
+
+    con = duckdb.connect(db_path)
+    con.execute("CREATE SCHEMA IF NOT EXISTS bronze")
     
-    # Lista i file nella cartella
-    files = [f for f in os.listdir(raw_dir) if f.endswith('.csv')]
-    
-    for file_name in files:
-        # Crea un nome tabella pulito (es. olist_orders_dataset)
-        table_name = file_name.replace(".csv", "")
-        file_path = os.path.join(raw_dir, file_name)
+    for file in datasets:
+        table_name = file.replace("olist_", "").replace("_dataset.csv", "")
+        path = f"data/raw/{file}"
         
-        print(f"Caricamento di {file_name} in bronze.{table_name}...")
-        
-        # Ingestione rapida con Polars [cite: 25, 106]
-        df = pl.read_csv(file_path)
-        
-        # Scrittura in DuckDB [cite: 24, 39]
-        conn.execute(f"CREATE OR REPLACE TABLE bronze.{table_name} AS SELECT * FROM df")
+        # Carico con Polars e salvo in DuckDB
+        df = pl.read_csv(path)
+        con.execute(f"CREATE OR REPLACE TABLE bronze.{table_name} AS SELECT * FROM df")
+        print(f"Caricato {table_name} nel layer Bronze")
     
-    conn.close()
-    return "Ingestion Bronze completata correttamente."
+    con.close()
