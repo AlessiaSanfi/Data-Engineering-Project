@@ -1,2 +1,14 @@
-volumes:
-  - ./data:/app/data
+version: '3.8'
+
+services:
+  dashboard:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ../data:/app/data
+    environment:
+      - DB_PATH=data/warehouse.duckdb
+    restart: always
