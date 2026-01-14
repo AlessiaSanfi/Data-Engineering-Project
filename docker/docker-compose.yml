@@ -1,10 +1,20 @@
 version: '3.8'
 
 services:
+  # Servizio ETL
+  etl:
+    image: localhost/olist_app:latest
+    volumes:
+      - ../data:/app/data
+    environment:
+      - PYTHONPATH=/app
+      - DB_PATH=data/warehouse.duckdb
+    command: python etl/flows/main_flows.py
+    restart: "no"
+
+  # Servizio Dashboard
   dashboard:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.app
+    image: localhost/olist_app:latest
     ports:
       - "8501:8501"
     volumes:
@@ -12,3 +22,6 @@ services:
     environment:
       - DB_PATH=data/warehouse.duckdb
     restart: always
+    depends_on:
+      etl:
+        condition: service_completed_successfully

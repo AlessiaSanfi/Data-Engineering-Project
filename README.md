@@ -2,12 +2,14 @@
 
 Questo progetto implementa una pipeline di Data Engineering professionale per l'analisi dei dati di e-commerce brasiliani (dataset Olist). L'obiettivo è trasformare i dati grezzi in un formato ottimizzato per l'analisi di business (KPI su vendite, logistica e performance dei venditori).
 
+
 ## ARCHITETTURA DEL PROGETTO
 Il progetto segue l'architettura **Medallion**, che organizza i dati in livelli di qualità crescente:
 
 1.  **Bronze Layer (Raw):** Ingestione dei file CSV originali in un database DuckDB. I dati sono conservati nel loro formato originale per garantire la tracciabilità.
 2.  **Silver Layer (Cleaned):** Pulizia e trasformazione. In questa fase i dati vengono tipizzati (conversione stringhe in `TIMESTAMP`, gestione dei prezzi come `DOUBLE`) e filtrati da record inconsistenti.
 3.  **Gold Layer (Analytical):** Creazione di uno Star Schema (Fact e Dimension tables) ottimizzato per la visualizzazione dei dati.
+
 
 ## MODELLAZIONE DATI
 Il Layer Gold è strutturato secondo un modello a stella (**Star Schema**), progettato per massimizzare le performance delle query analitiche e facilitare la creazione di report.
@@ -18,12 +20,14 @@ Il Layer Gold è strutturato secondo un modello a stella (**Star Schema**), prog
 Per una descrizione tecnica dettagliata dei campi, delle chiavi primarie/esterne e per visualizzare il diagramma ER completo, consulta la documentazione dedicata:
 **[Documentazione Star Schema](models/star_schema.md)**
 
+
 ## DOMANDE DI BUSINESS:
 1. **Analisi del fatturato:** Qual è il fatturato totale generato e come si distribuisce tra le diverse categorie? (price e dim_products).
 2. **Distribuzione geografica:** Quali sono i primi 5 Stati per volume di ordini e valore delle vendite? (fact_sales e dim_customers).
 3. **Performance logistica:** Qual è il tempo medio di consegna (delivery_time_days) per ogni Stato e dove si riscontrano i maggiori ritardi? (dim_customers).
 4. **Analisi dei costi:** Quanto incidono le spese di spedizione (freight_value) sul valore totale dell'ordine?
 5. **Trend temporali:** Esistono picchi di vendita particolari durante i diversi trimestri (quarter) o giorni della settimana? (dim_time).
+
 
 ## MAPPATURA DASHBOARD
 Ogni domanda di business trova una risposta diretta all'interno della dashboard interattiva.
@@ -36,12 +40,39 @@ Ogni domanda di business trova una risposta diretta all'interno della dashboard 
 
 **Nota:** La dashboard permette di filtrare tutti i risultati per Stato del cliente tramite la barra laterale, consentendo un'analisi granulare per ogni domanda sopra elencata.
 
+
 ## STACK TECNOLOGICO
 - **Linguaggio:** Python 3.x
 - **Orchestratore:** [Prefect](https://www.prefect.io/) (per gestione dei flussi, monitoraggio e automazione)
 - **Database:** [DuckDB](https://duckdb.org/) (OLAP database in-process)
 - **Data Manipulation:** Polars
 - **Visualizzazione:** Streamlit
+- **Containerizzazione:** Podman
+
+
+## CONTAINERIZZAZIONE (PODMAN)
+
+Il progetto è interamente containerizzato per garantire l'isolamento e la portabilità. L'architettura utilizza un'unica immagine unificata per gestire sia l'ETL che la Dashboard.
+
+### Architettura dei Container
+- **ETL Service**: Esegue la pipeline orchestrata con Prefect. Si chiude automaticamente al completamento.
+- **Dashboard Service**: Avvia l'interfaccia Streamlit (Porta 8501). Parte solo dopo il successo della fase ETL.
+- **Persistence**: Il database DuckDB è memorizzato in un volume locale (`./data`) per garantire la persistenza dei dati.
+
+### Come avviare con Podman
+
+1. **Build dell'immagine** (dalla root del progetto):
+        
+        podman build -t olist_app -f docker/Dockerfile.app .
+
+2. **Avio della Pipeline e Dashboard:** Lanciare il comando e attendere che i log dell'ETL mostrino "PIPELINE COMPLETATA CON SUCCESSO:"
+       
+        python -m podman_compose -f docker/docker-compose.yml up
+
+3. **Accesso:** Una volta completato l'ETL, la dashboard è disponibile su:
+       
+        http://localhost:8501
+
 
 ## STRUTTURA DELLE CARTELLE
 
