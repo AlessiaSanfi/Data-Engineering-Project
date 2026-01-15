@@ -2,7 +2,7 @@ import duckdb
 
 # Funzioni per eseguire query sul data warehouse DuckDB
 def get_connection(db_path):
-    return duckdb.connect(db_path)
+    return duckdb.connect(db_path, read_only=True)
 
 # Funzione per caricare i KPI principali
 def load_kpis(con, query_where):

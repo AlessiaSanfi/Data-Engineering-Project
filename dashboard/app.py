@@ -95,7 +95,7 @@ with col_ordini:
             'config': {
                 'view': {'stroke': None}
             }
-        }, use_container_width=True)
+        }, width='stretch')
     else:
         st.info("Nessun dato disponibile.")
 

@@ -8,7 +8,7 @@ Il progetto segue l'architettura **Medallion**, che organizza i dati in livelli 
 
 1.  **Bronze Layer (Raw):** Ingestione dei file CSV originali in un database DuckDB. I dati sono conservati nel loro formato originale per garantire la tracciabilità.
 2.  **Silver Layer (Cleaned):** Pulizia e trasformazione. In questa fase i dati vengono tipizzati (conversione stringhe in `TIMESTAMP`, gestione dei prezzi come `DOUBLE`) e filtrati da record inconsistenti.
-3.  **Gold Layer (Analytical):** Creazione di uno Star Schema (Fact e Dimension tables) ottimizzato per la visualizzazione dei dati.
+3.  **Gold Layer (Analytical):** Creazione dello Star Schema (Fact e Dimension tables) ottimizzato per la visualizzazione dei dati.
 
 
 ## MODELLAZIONE DATI

@@ -2,14 +2,24 @@
 
 Il Layer Gold del progetto segue un'architettura a stella (Star Schema), con una Fact Table centrale e Dimension Tables collegate, ottimizzata per l'analisi delle performance di vendita e della logistica dell'e-commerce Olist.
 
-## 1. Schema Grafico
+## Schema Grafico
 Il diagramma è stato progettato per garantire la centralità dei fatti numerici (fact) circondati dal contesto descrittivo (dimensions).
 
 ![Diagramma Star Schema](../models/diagrams/diagramma_star_schema.drawio.png)
 
 ---
 
-## 2. Elenco Campi e Definizioni
+## Domande di Business:
+
+1. **Analisi del fatturato:** Qual è il fatturato totale generato e come si distribuisce tra le diverse categorie? (price e dim_products).
+2. **Distribuzione geografica:** Quali sono i primi 5 Stati per volume di ordini e valore delle vendite? (fact_sales e dim_customers).
+3. **Performance logistica:** Qual è il tempo medio di consegna (delivery_time_days) per ogni Stato e dove si riscontrano i maggiori ritardi? (dim_customers).
+4. **Analisi dei costi:** Quanto incidono le spese di spedizione (freight_value) sul valore totale dell'ordine?
+5. **Trend temporali:** Esistono picchi di vendita particolari durante i diversi trimestri (quarter) o giorni della settimana? (dim_time).
+
+---
+
+## Elenco Campi e Definizioni
 
 ### **Fact Table: `fact_sales`**
 Rappresenta l'evento di vendita a livello di singolo articolo all'interno di un ordine.
