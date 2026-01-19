@@ -1,14 +1,64 @@
 # BRAZILIAN E-COMMERCE DATA PIPELINE (OLIST)
-
 Questo progetto implementa una pipeline di Data Engineering professionale per l'analisi dei dati di e-commerce brasiliani (dataset Olist). L'obiettivo è trasformare i dati grezzi in un formato ottimizzato per l'analisi di business (KPI su vendite, logistica e performance dei venditori).
+
+
+## STACK TECNOLOGICO
+- **Linguaggio:** Python 3.x
+- **Orchestratore:** [Prefect](https://www.prefect.io/) (per gestione dei flussi, monitoraggio e automazione)
+- **Database:** [DuckDB](https://duckdb.org/) (OLAP database in-process)
+- **Data Manipulation:** Polars
+- **Visualizzazione:** Streamlit
+- **Containerizzazione:** Podman
 
 
 ## ARCHITETTURA DEL PROGETTO
 Il progetto segue l'architettura **Medallion**, che organizza i dati in livelli di qualità crescente:
 
-1.  **Bronze Layer (Raw):** Ingestione dei file CSV originali in un database DuckDB. I dati sono conservati nel loro formato originale per garantire la tracciabilità.
-2.  **Silver Layer (Cleaned):** Pulizia e trasformazione. In questa fase i dati vengono tipizzati (conversione stringhe in `TIMESTAMP`, gestione dei prezzi come `DOUBLE`) e filtrati da record inconsistenti.
-3.  **Gold Layer (Analytical):** Creazione dello Star Schema (Fact e Dimension tables) ottimizzato per la visualizzazione dei dati.
+1.  **Bronze Layer (raw):** Ingestione dei file CSV originali in un database DuckDB. I dati sono conservati nel loro formato originale per garantire la tracciabilità.
+2.  **Silver Layer (cleaned):** Pulizia e trasformazione. In questa fase i dati vengono tipizzati (conversione stringhe in `TIMESTAMP`, gestione dei prezzi come `DOUBLE`) e filtrati da record inconsistenti.
+3.  **Gold Layer (analytical):** Creazione dello Star Schema (Fact e Dimension tables) ottimizzato per la visualizzazione dei dati.
+
+
+## STRUTTURA DEL DATABASE (DuckDB)
+Il progetto utilizza **DuckDB** come motore OLAP in-process per gestire l'intero ciclo di vita del dato.
+Il database è strutturato in tre schemi logici principali:
+
+### 1. Layer Bronze (raw data)
+In questo schema vengono caricate le tabelle grezze direttamente dai file CSV originali senza alcuna trasformazione.
+* **Tabelle**: `orders`, `order_items`, `products`, `customers`, `sellers`, ecc.
+* **Scopo**: Preservare la fedeltà del dato originale per eventuali ri-elaborazioni.
+
+### 2. Layer Silver (cleaned & validated)
+In questo schema i dati vengono puliti, tipizzati e validati tramite **Pandera**.
+* **Trasformazioni**: Conversione delle stringhe in `TIMESTAMP`, cast dei prezzi in `DOUBLE` e rimozione di record inconsistenti.
+* **Data Quality**: Ogni tabella in questo schema ha superato con successo i controlli di integrità (es. prezzi non negativi, stati ordine validi).
+
+### 3. Layer Gold (analytics ready)
+Il layer finale dove i dati vengono modellati secondo uno **Schema a Stella (Star Schema)** per ottimizzare le performance delle query analitiche e della dashboard.
+* **Fact Table**: Contiene le metriche quantitative (es. vendite, volumi).
+* **Dimension Tables**: Tabelle descrittive (es. `dim_products`, `dim_customers`, `dim_time`) collegate alla Fact Table.
+* **Scopo**: Alimentare direttamente la dashboard Streamlit con query ad alte prestazioni.
+
+
+## DATA QUALITY E VALIDAZIONE (PANDERA)
+Per garantire l'integrità del dato durante il passaggio dal layer **Bronze** al layer **Silver**, la pipeline integra dei **Data Quality Gates** sviluppati con la libreria [Pandera](https://pandera.readthedocs.io/).
+
+L'implementazione prevede i seguenti controlli automatizzati:
+* **Validazione dei tipi**: Verifica che i dati estratti rispettino rigorosamente la tipizzazione definita (es. `TIMESTAMP` per le date e `DOUBLE` per i prezzi).
+* **Integrità degli Identificativi**: Controllo rigoroso sulla presenza obbligatoria del campo `order_id` (not null).
+* **Controlli di business**: Applicazione di check sui range numerici, garantendo che colonne critiche come `price` e `freight_value` non contengano mai valori negativi.
+* **Integrità categorica**: Validazione della colonna `order_status` tramite una lista chiusa di stati ammessi, filtrando eventuali anomalie nei dati grezzi.
+
+### Fail-Fast architecture:
+L'integrazione è progettata per essere **bloccante**: se un test di validazione fallisce, Pandera solleva un'eccezione che interrompe immediatamente il flusso di **Prefect**. Questo approccio impedisce la propagazione di dati corrotti verso il layer **Gold**, garantendo che le analisi di Business Intelligence siano basate su dati certificati.
+
+
+### MONITORAGGIO DELLA DATA QUALITY (PREFECT)
+L'integrazione tra **Pandera** e **Prefect** permette un monitoraggio visivo immediato dello stato della pipeline tramite la dashboard locale (`http://127.0.0.1:4200`):
+
+* **Stato dei Task**: Se i dati non rispettano lo schema definito in `silver.py`, il task `Clean Olist Data (Silver)` viene contrassegnato automaticamente come **Failed**.
+* **Log di Validazione**: All'interno della sezione "Logs" del task fallito, è possibile visualizzare il report dettagliato di Pandera che indica esattamente quale colonna e quali righe hanno causato l'errore (es. `Check 'ge(0)' failed for column 'price'`).
+* **Blocco Downstream**: Prefect garantisce che il task successivo (`Build Olist Star Schema (Gold)`) rimanga in stato **NotRun** o **Pending**, proteggendo l'integrità del Data Warehouse finale.
 
 
 ## MODELLAZIONE DATI
@@ -41,17 +91,7 @@ Ogni domanda di business trova una risposta diretta all'interno della dashboard 
 **Nota:** La dashboard permette di filtrare tutti i risultati per Stato del cliente tramite la barra laterale, consentendo un'analisi granulare per ogni domanda sopra elencata.
 
 
-## STACK TECNOLOGICO
-- **Linguaggio:** Python 3.x
-- **Orchestratore:** [Prefect](https://www.prefect.io/) (per gestione dei flussi, monitoraggio e automazione)
-- **Database:** [DuckDB](https://duckdb.org/) (OLAP database in-process)
-- **Data Manipulation:** Polars
-- **Visualizzazione:** Streamlit
-- **Containerizzazione:** Podman
-
-
 ## CONTAINERIZZAZIONE (PODMAN)
-
 Il progetto è interamente containerizzato per garantire l'isolamento e la portabilità. L'architettura utilizza un'unica immagine unificata per gestire sia l'ETL che la Dashboard.
 
 ### Architettura dei Container
