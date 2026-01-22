@@ -6,7 +6,7 @@ Questo progetto implementa una pipeline di Data Engineering professionale per l'
 - **Linguaggio:** Python 3.x
 - **Orchestratore:** [Prefect](https://www.prefect.io/) (per gestione dei flussi, monitoraggio e automazione)
 - **Database:** [DuckDB](https://duckdb.org/) (OLAP database in-process)
-- **Data Manipulation:** Polars
+- **Data Manipulation:** Polars e Pandas
 - **Visualizzazione:** Streamlit
 - **Containerizzazione:** Podman
 
@@ -74,19 +74,20 @@ Per una descrizione tecnica dettagliata dei campi, delle chiavi primarie/esterne
 ## DOMANDE DI BUSINESS:
 1. **Analisi del fatturato:** Qual è il fatturato totale generato e come si distribuisce tra le diverse categorie? (price e dim_products).
 2. **Distribuzione geografica:** Quali sono i primi 5 Stati per volume di ordini e valore delle vendite? (fact_sales e dim_customers).
-3. **Performance logistica:** Qual è il tempo medio di consegna (delivery_time_days) per ogni Stato e dove si riscontrano i maggiori ritardi? (dim_customers).
-4. **Analisi dei costi:** Quanto incidono le spese di spedizione (freight_value) sul valore totale dell'ordine?
-5. **Trend temporali:** Esistono picchi di vendita particolari durante i diversi trimestri (quarter) o giorni della settimana? (dim_time).
-
+3. **Efficienza logistica:** Quanto tempo impiegano mediamente i prodotti per arrivare a destinazione nei diversi Stati? (delivery_time_days e dim_customers).
+4. **Impatto dei costi di spedizione:** Qual è l'incidenza del trasporto sulle vendite e quali Stati presentano le tariffe medie più alte? (freight_value).
+5. **Andamento storico:** Come si evolvono le vendite mese dopo mese e quali sono i trend di crescita a lungo termine? (dim_time).
+6. **Analisi acquisti settimanali:** In quali giorni della settimana si concentra la maggior parte degli ordini e qual è la spesa media per ogni transazione? (dim_time e fact_sales).
 
 ## MAPPATURA DASHBOARD
 Ogni domanda di business trova una risposta diretta all'interno della dashboard interattiva.
 
-1. **Analisi del fatturato:** = KPI "Fatturato Totatle + grafico "Top 10 Categorie".
-2. **Distribuzione geografica:** = KPI "Ordini Totali" + Grafico "Ordini per Stato".
-3. **Performance logistica:** = KPI "Consegna Media" + Grafico "Analisi Ritardi per Stato".
-4. **Analisi dei costi:** = KPI "Spedizione Media" + Grafico "Prezzo vs Spedizione".
-5. **Trend temporali:** = Grafico "Trend Temporale delle Vendite".
+1. **Analisi del fatturato:** = KPI "Fatturato" + grafico "Top 10 Categorie" (Donut Chart).
+2. **Distribuzione geografica:** = KPI "Ordini" + Grafico "Ordini per Stato" (Mappa Coropletica).
+3. **Efficienza logistica:** = KPI "Consegna Media" + Grafico "Tempi di consegna per Stato" (Bar Chart orizzontale).
+4. **Analisi dei costi:** = KPI "Spedizione Media" + Grafico "Costo Medio Spedizione per Stato" (Bar Chart orizzontale).
+5. **Trend temporali:** = Grafico "Trend Temporale delle Vendite" (line chart).
+6. **Analisi acquisti settimanali** KPI "Spesa Media" + Grafico "Stagionalità Settimanale" (Bar chart verticale).
 
 **Nota:** La dashboard permette di filtrare tutti i risultati per Stato del cliente tramite la barra laterale, consentendo un'analisi granulare per ogni domanda sopra elencata.
 
@@ -105,7 +106,7 @@ Il progetto è interamente containerizzato per garantire l'isolamento e la porta
         
         podman build -t olist_app -f docker/Dockerfile.app .
 
-2. **Avio della Pipeline e Dashboard:** Lanciare il comando e attendere che i log dell'ETL mostrino "PIPELINE COMPLETATA CON SUCCESSO:"
+2. **Avvio della Pipeline e Dashboard:** Lanciare il comando e attendere che i log dell'ETL mostrino "PIPELINE COMPLETATA CON SUCCESSO:"
        
         python -m podman_compose -f docker/docker-compose.yml up
 
@@ -117,19 +118,29 @@ Il progetto è interamente containerizzato per garantire l'isolamento e la porta
 ## STRUTTURA DELLE CARTELLE
 
 Data-Engineering-Project/
-├── data/
-│   ├── raw/               # File CSV originali
-│   └── warehouse.duckdb   # Database analitico (creato dalla pipeline)
-├── etl/
+├── data/                           # Dati di progetto
+│   ├── raw/                        # File CSV originali (Olist dataset)
+│   └── warehouse.duckdb            # Database DuckDB (Gold Layer)
+├── dashboard/                      # Front-end analitico
+│   ├── app.py                      # Applicazione principale Streamlit
+│   └── queries.py                  # Query SQL per il Warehouse
+├── docker/                         # Containerizzazione
+│   ├── Dockerfile.app              # Configurazione immagine unificata
+│   └── docker-compose.yml          # Orchestrazione servizi (ETL + Web)
+├── etl/                            # Pipeline di Data Engineering
 │   ├── flows/
-│   │   └── main_flows.py  # Regista della pipeline (Prefect Flow)
+│   │   └── main_flows.py           # Regista della pipeline (Prefect)
 │   ├── tasks/
-│   │   ├── bronze.py      # Logica di ingestione
-│   │   ├── silver.py      # Logica di pulizia e trasformazione
-│   │   └── gold.py        # Logica di modellazione dati (Star Schema)
-│   └── utils.py           # Funzioni di utilità (connessione DB)
-├── requirements.txt       # Dipendenze del progetto
-└── .env                   # Configurazioni locali (percorsi DB)
+│   │   ├── bronze.py               # Ingestione raw data
+│   │   ├── silver.py               # Pulizia e validazione (Pandera)
+│   │   └── gold.py                 # Modellazione Star Schema
+│   └── utils.py                    # Utility di connessione e helper
+├── models/                         # Documentazione tecnica
+│   └── star_schema.md              # Dettagli del modello dati Gold
+├── .env                            # Variabili d'ambiente (path locali)
+├── .gitignore                      # Esclusione file (es. venv, database)
+├── requirements.txt                # Dipendenze Python
+└── README.md                       # Documentazione del progetto
 
 
 ## COME AVVIARE IL PROGETTO
