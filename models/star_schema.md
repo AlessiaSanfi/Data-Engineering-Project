@@ -9,13 +9,13 @@ Il diagramma è stato progettato per garantire la centralità dei fatti numerici
 
 ---
 
-## Domande di Business:
-
+## DOMANDE DI BUSINESS:
 1. **Analisi del fatturato:** Qual è il fatturato totale generato e come si distribuisce tra le diverse categorie? (price e dim_products).
 2. **Distribuzione geografica:** Quali sono i primi 5 Stati per volume di ordini e valore delle vendite? (fact_sales e dim_customers).
-3. **Performance logistica:** Qual è il tempo medio di consegna (delivery_time_days) per ogni Stato e dove si riscontrano i maggiori ritardi? (dim_customers).
-4. **Analisi dei costi:** Quanto incidono le spese di spedizione (freight_value) sul valore totale dell'ordine?
-5. **Trend temporali:** Esistono picchi di vendita particolari durante i diversi trimestri (quarter) o giorni della settimana? (dim_time).
+3. **Efficienza logistica:** Quanto tempo impiegano mediamente i prodotti per arrivare a destinazione nei diversi Stati? (delivery_time_days e dim_customers).
+4. **Impatto dei costi di spedizione:** Qual è l'incidenza del trasporto sulle vendite e quali Stati presentano le tariffe medie più alte? (freight_value).
+5. **Andamento storico:** Come si evolvono le vendite mese dopo mese e quali sono i trend di crescita a lungo termine? (dim_time).
+6. **Analisi acquisti settimanali:** In quali giorni della settimana si concentra la maggior parte degli ordini e qual è la spesa media per ogni transazione? (dim_time e fact_sales).
 
 ---
 
