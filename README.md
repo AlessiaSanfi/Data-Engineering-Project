@@ -92,6 +92,14 @@ Ogni domanda di business trova una risposta diretta all'interno della dashboard 
 **Nota:** La dashboard permette di filtrare tutti i risultati per Stato del cliente tramite la barra laterale, consentendo un'analisi granulare per ogni domanda sopra elencata.
 
 
+## INTEGRAZIONE GENERATIVE AI (TEXT-TO-SQL)
+Il progetto include un modulo avanzato di **Natural Language Processing** che permette agli utenti di interrogare il database utilizzando il linguaggio naturale.
+
+- **Tecnologia:** Integrazione con le API di **Google Gemini** (modello `gemini-flash-lite-latest`).
+- **Funzionamento:** Il sistema riceve una domanda in testo libero (es. *"Qual è il fatturato totale per la città di San Paolo?"*), la traduce istantaneamente in una query SQL valida per DuckDB basandosi sulla struttura dello Star Schema Gold, ed esegue l'interrogazione.
+- **Sicurezza:** La logica di generazione è blindata da un sistema di *Prompt Engineering* che vincola l'output al solo schema `gold`, prevenendo allucinazioni o accessi a tabelle non autorizzate.
+
+
 ## CONTAINERIZZAZIONE (PODMAN)
 Il progetto è interamente containerizzato per garantire l'isolamento e la portabilità. L'architettura utilizza un'unica immagine unificata per gestire sia l'ETL che la Dashboard.
 

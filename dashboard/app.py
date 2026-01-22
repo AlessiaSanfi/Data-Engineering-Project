@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import plotly.express as px
+from ai_utils import translate_text_to_sql
 from queries import (
     get_connection,
     load_kpis,
@@ -13,17 +14,27 @@ from queries import (
     load_weekly_seasonality
 )
 
+# ------------------------------------------------------------------
 # --- CONFIGURAZIONE PAGINA ---
+# ------------------------------------------------------------------
+
 st.set_page_config(page_title="Olist E-Commerce Dashboard", layout="wide")
 
 st.title("Olist Business Intelligence Dashboard")
 st.markdown("Analisi professionale delle vendite e della logistica basata sul dataset Olist.")
 
+# ------------------------------------------------------------------
 # --- CONNESSIONE DATABASE ---
+# ------------------------------------------------------------------
+
 db_path = os.getenv("DB_PATH", "data/warehouse.duckdb")
 con = get_connection(db_path)
 
+# ------------------------------------------------------------------
 # --- MAPPE DI DECODIFICA ---
+# ------------------------------------------------------------------
+
+# Mappa per decodificare le sigle degli stati brasiliani
 mappa_stati = {
     'SP': 'San Paolo', 'RJ': 'Rio de Janeiro', 'MG': 'Minas Gerais', 'RS': 'Rio Grande do Sul',
     'PR': 'Paraná', 'SC': 'Santa Catarina', 'BA': 'Bahia', 'DF': 'Distrito Federal',
@@ -33,6 +44,7 @@ mappa_stati = {
     'TO': 'Tocantins', 'RO': 'Rondônia', 'AM': 'Amazonas', 'AC': 'Acre', 'AP': 'Amapá', 'RR': 'Roraima'
 }
 
+# Mappa per decodificare le categorie di prodotto
 mappa_categorie = {
     'agro_industria_e_comercio': 'Agroindustria & Commercio',
     'alimentos': 'Alimentari',
@@ -66,7 +78,11 @@ mappa_categorie = {
     'utilidades_domesticas': 'Utensili per la Casa'
 }
 
+# ------------------------------------------------------------------
 # --- FUNZIONI GRAFICHE ---
+# ------------------------------------------------------------------
+
+# Funzione per disegnare un bar chart statico con tooltip personalizzati
 def draw_static_bar(df, x_col, y_col, color="#4682B4", orient="v", height=300, label_y=None):
     """Renderizza un bar chart statico con tooltip personalizzati."""
     friendly_name = label_y if label_y else y_col
@@ -92,6 +108,7 @@ def draw_static_bar(df, x_col, y_col, color="#4682B4", orient="v", height=300, l
         }
     }, width='stretch')
 
+# Funzione per disegnare un line chart statico con tooltip personalizzati
 def draw_static_line(df, x_col, y_col, color="#4682B4", height=300):
     st.vega_lite_chart(df, {
         'width': 'container',
@@ -104,7 +121,10 @@ def draw_static_line(df, x_col, y_col, color="#4682B4", height=300):
         'config': {'view': {'stroke': 'transparent'}, 'selection': {'grid': False}}
     }, width='stretch')
 
+# ------------------------------------------------------------------
 # --- SIDEBAR E FILTRI ---
+# ------------------------------------------------------------------
+
 st.sidebar.header("Filtri")
 nomi_selezionati = st.sidebar.multiselect("Seleziona lo Stato", sorted(mappa_stati.values()))
 
@@ -117,7 +137,10 @@ if sigle_selezionate:
     stati_str = "', '".join(sigle_selezionate)
     query_where = f"WHERE c.customer_state IN ('{stati_str}')"
 
+# ------------------------------------------------------------------
 # --- KPI PRINCIPALI ---
+# ------------------------------------------------------------------
+
 st.subheader("Key Performance Indicators")
 total_sales, avg_delivery, total_orders, avg_freight = load_kpis(con, query_where)
 spesa_media = total_sales / total_orders if total_orders > 0 else 0
@@ -131,7 +154,10 @@ c5.metric("Spesa Media", f"€ {spesa_media:.2f}")
 
 st.divider()
 
+# ------------------------------------------------------------------
 # --- RIGA 1: CATEGORIE E ORDINI ---
+# ------------------------------------------------------------------
+
 col_cat, col_ordini = st.columns(2)
 
 # Top 10 Categorie
@@ -183,7 +209,10 @@ with col_ordini:
 
         st.plotly_chart(fig, width='stretch', config={'displayModeBar': False, 'staticPlot': False})
 
+# ------------------------------------------------------------------
 # --- RIGA 2: TEMPI CONSEGNA E COSTI SPEDIZIONE ---
+# ------------------------------------------------------------------
+
 col_shipping_time, col_shipping_price = st.columns(2)
 
 # Tempi di Consegna per Stato
@@ -206,7 +235,10 @@ with col_shipping_price:
     else:
         st.info("Dati sui costi di spedizione non disponibili.")
 
+# ------------------------------------------------------------------
 # --- RIGA 3: TREND TEMPORALE E STAGIONALITÀ SETTIMANALE ---
+# ------------------------------------------------------------------
+
 col_trend, col_weekly = st.columns(2)
 
 # Trend Temporale delle Vendite da sttembre 2016 a ottobre (agosto) 2018
@@ -228,5 +260,85 @@ with col_weekly:
         draw_static_bar(df_weekly.sort_values('Giorno della settimana'), 'Giorno della settimana', 'Fatturato', color="#2E8B57")
     else:
         st.info("Dati di stagionalità settimanale non disponibili.")
+
+st.divider()
+
+# ------------------------------------------------------------------
+# --- RIGA 4: ASSISTENTE AI ---
+# ------------------------------------------------------------------
+
+st.header("Text-to-SQL Assistant")
+user_query = st.text_input("Fai una domanda sui dati (es. 'Fatturato totale per città'):")
+
+if user_query:
+    sql_query = translate_text_to_sql(user_query)
+
+    st.subheader("Query Generata")
+    st.code(sql_query, language="sql")
+    
+    try:
+        df_ai = con.execute(sql_query).df()
+        
+        # --- LOGICA DI MAPPATURA COLONNE ---
+        
+        #Applichiamo la mappatura dei valori (Stati e Categorie)
+        if 'customer_state' in df_ai.columns:
+            df_ai['customer_state'] = df_ai['customer_state'].map(mappa_stati).fillna(df_ai['customer_state'])
+        
+        if 'product_category_name' in df_ai.columns:
+            df_ai['product_category_name'] = df_ai['product_category_name'].map(mappa_categorie).fillna(df_ai['product_category_name'])
+        
+        mappa_colonne_ai = {
+            # Nomi reali del database
+            'customer_id': 'ID Cliente',
+            'order_id': 'ID Ordine',
+            'product_id': 'ID Prodotto',
+            'customer_city': 'Città',
+            'customer_state': 'Stato',
+            'product_category_name': 'Categoria Prodotto',
+            'order_purchase_timestamp': 'Data Acquisto',
+            'price': 'Prezzo',
+            'freight_value': 'Costo Spedizione',
+            'delivery_time_days': 'Giorni Consegna',
+            'year': 'Anno',
+            'quarter': 'Trimestre',
+            'month': 'Mese',
+            'day': 'Giorno',
+            'day_of_week': 'Giorno della Settimana',
+
+            # Alias richiesti
+            'total_revenue': 'Fatturato Totale',
+            'revenue': 'Fatturato',
+            'total_orders': 'Totale Ordini',
+            'order_count': 'Numero Ordini',
+            'avg_price': 'Prezzo Medio',
+
+            # Ulteriori alias comuni generati dall'AI
+            'avg_delivery_time': 'Media Giorni Consegna',
+            'max_delivery_time': 'Consegna Massima (gg)',
+            'min_delivery_time': 'Consegna Minima (gg)',
+            'avg_freight': 'Media Spese Spedizione',
+            'total_freight': 'Costo Spedizione Totale',
+            'max_price': 'Prezzo Massimo',
+            'min_price': 'Prezzo Minimo',
+            'orders': 'Numero Ordini',
+            'customer_count': 'Numero Clienti',
+            'avg_order_value': 'Valore Medio Ordine',
+            'city': 'Città',
+            'state': 'Stato',
+            'category': 'Categoria'
+        }
+
+        # Rinomina solo le colonne presenti nel risultato
+        df_ai = df_ai.rename(columns=mappa_colonne_ai)
+        
+        st.subheader("Risultato")
+        if not df_ai.empty:
+            st.dataframe(df_ai, width='stretch')
+        else:
+            st.warning("La query non ha prodotto risultati.")
+            
+    except Exception as e:
+        st.error(f"Errore nell'esecuzione della query: {e}")
 
 con.close()
