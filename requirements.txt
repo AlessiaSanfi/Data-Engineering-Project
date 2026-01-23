@@ -6,3 +6,5 @@ streamlit
 python-dotenv
 plotly
 google-genai
+pyarrow
+fastparquet

@@ -29,7 +29,7 @@ def translate_text_to_sql(user_prompt):
         contents=f"{context}\n\nDomanda: {user_prompt}"
     )
     
-    # --- LOGICA DI PERFEZIONISMO (PULIZIA) ---
+    # --- LOGICA DI PERFEZIONISMO ---
     raw_response = response.text.strip()
     
     # Rimuovo i tag markdown se l'IA li ha inseriti per errore

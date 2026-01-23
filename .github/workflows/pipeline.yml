@@ -1,0 +1,53 @@
+# Automazione GitHub Actions
+
+#--------------------------------------------------------------
+# Workflow per eseguire la pipeline ETL giornaliera.
+# Il file comunica con GitHub e definisce i passaggi necessari per eseguire la pipeline ETL:
+## Preparazione di un computer virtuale (Ubuntu).
+## Installazione Python e librerie necessarie.
+## Esecuzione degli script ETL in sequenza.
+## Salvataggio dei risultati (il database e i file del Lake) direttamente nel repository.
+# Requisiti implementati:
+## Scheduling via Cron: Il comando - cron: '0 2 * * *' risponde alla richiesta di automazione notturna.
+## Workflow Dispatch: Consente ad una persona esterna di cliccare un tasto e vedere la pipeline girare davanti ai suoi occhi.
+## Persistenza: Facendo il git push alla fine, i dati aggiornati nel Data Lake diventano la nuova "fonte di verità" visibile a tutti.
+#--------------------------------------------------------------
+
+name: Olist Daily Pipeline
+
+on:
+  schedule:
+    # Esegue la pipeline ogni giorno alle 02:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Permette il lancio manuale dal sito GitHub
+
+jobs:
+  run-etl:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install pandas pyarrow fastparquet duckdb google-genai python-dotenv
+
+      - name: Run Incremental Ingestion (Bronze to Silver)
+        run: python etl/tasks/bronze_incremental.py
+
+      - name: Run Star Schema Transformation (Silver to Gold)
+        run: python etl/tasks/silver_to_gold.py
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add data/lake/ data/warehouse.duckdb
+          git commit -m "auto: update data lake and warehouse [skip ci]" || echo "No changes to commit"
+          git push
