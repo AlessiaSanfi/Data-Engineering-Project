@@ -5,7 +5,7 @@
 # Database DuckDB
 *.duckdb
 *.duckdb.wal
-data/
+
 
 # Ambiente e variabili
 .env
