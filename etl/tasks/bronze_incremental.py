@@ -37,6 +37,11 @@ def validate_data(df, file_name):
 
 # Funzione principale per il caricamento incrementale
 def run_bronze_incremental():
+    # Creo le cartelle se non esistono
+    os.makedirs("data/lake/bronze/landing_zone", exist_ok=True)
+    os.makedirs("data/lake/silver", exist_ok=True)
+    os.makedirs("data/lake/gold", exist_ok=True)
+
     con = duckdb.connect(DB_PATH)
     
     print("Scansione landing zone per nuovi file Parquet...")
