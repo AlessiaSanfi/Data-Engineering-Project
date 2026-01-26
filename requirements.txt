@@ -2,7 +2,7 @@ prefect
 duckdb
 polars
 pandas
-streamlit
+streamlit>=1.35.0
 python-dotenv
 plotly
 google-genai

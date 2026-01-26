@@ -1,5 +1,4 @@
 # BRAZILIAN E-COMMERCE DATA PIPELINE (OLIST)
-
 Questo progetto implementa una pipeline di Data Engineering professionale per l'analisi dei dati di e-commerce brasiliani (dataset Olist). L'obiettivo è trasformare i dati grezzi in un formato ottimizzato per l'analisi di business (KPI su vendite, logistica e performance dei venditori).
 
 **Badge di GitHub Actions**:
@@ -15,6 +14,10 @@ Questo progetto implementa una pipeline di Data Engineering professionale per l'
 - **Data Format:** Apache Parquet (Storage colonnare)
 - **Visualizzazione:** Streamlit
 - **Containerizzazione:** Podman
+
+
+## AUTOMAZIONE
+**CI/CD & Scheduling:** GitHub Actions gestisce l'esecuzione automatica della pipeline ogni notte alle 02:00 e convalida ogni nuova modifica al codice tramite test automatizzati.
 
 
 ## ARCHITETTURA DEL PROGETTO
@@ -103,7 +106,7 @@ Il progetto include un modulo avanzato di **Natural Language Processing** che pe
 
 - **Tecnologia:** Integrazione con le API di **Google Gemini** (modello `gemini-flash-lite-latest`).
 - **Funzionamento:** Il sistema riceve una domanda in testo libero (es. *"Qual è il fatturato totale per la città di San Paolo?"*), la traduce istantaneamente in una query SQL valida per DuckDB basandosi sulla struttura dello Star Schema Gold, ed esegue l'interrogazione.
-- **Sicurezza:** La logica di generazione è blindata da un sistema di *Prompt Engineering* che vincola l'output al solo schema `gold`, prevenendo allucinazioni o accessi a tabelle non autorizzate.
+- **Sicurezza:** La logica di generazione è blindata da un sistema di *Prompt Engineering* che vincola l'output alle sole tabelle dello Star Schema, prevenendo allucinazioni o accessi a tabelle non autorizzate.
 
 **Esempio:** *"Qual è il fatturato totale per la città di San Paolo nel 2017?"*
 - L'AI traduce la domanda in una query DuckDB ottimizzata, recupera i dati dal layer Gold e restituisce il risultato formattato in **Real Brasiliani (R$)**.
@@ -132,37 +135,45 @@ Il progetto è interamente containerizzato per garantire l'isolamento e la porta
 
 
 ## STRUTTURA DELLE CARTELLE
-
 Data-Engineering-Project/
-├── data/                           # Dati di progetto
-│   ├── raw/                        # File CSV originali (Olist dataset)
-│   └── warehouse.duckdb            # Database DuckDB (Gold Layer)
-├── dashboard/                      # Front-end analitico
-│   ├── app.py                      # Applicazione principale Streamlit
-│   └── queries.py                  # Query SQL per il Warehouse
-├── docker/                         # Containerizzazione
-│   ├── Dockerfile.app              # Configurazione immagine unificata
-│   └── docker-compose.yml          # Orchestrazione servizi (ETL + Web)
-├── etl/                            # Pipeline di Data Engineering
+├── .github/
+│   └── workflows/
+│       └── pipeline.yml            # Automazione GitHub Actions
+├── data/
+│   ├── lake/                       # Data Lake Medallion (Parquet)
+│   │   ├── bronze/
+│   │   ├── gold/
+│   │   └── silver/
+│   └── raw/                        # Dataset originale (CSV)
+├── dashboard/                      # Componenti della Dashboard
+│   ├── app.py                      # Punto di ingresso Streamlit
+│   └── queries.py                  # Query SQL e logica dati
+├── docker/                         # Configurazione Container
+│   ├── docker-compose.yml
+│   └── Dockerfile.app
+├── etl/                            # Pipeline di Ingegneria Dati
 │   ├── flows/
-│   │   └── main_flows.py           # Regista della pipeline (Prefect)
+│   │   └── main_flows.py           # Orchestratore Prefect
 │   ├── tasks/
-│   │   ├── bronze.py               # Ingestione raw data
-│   │   ├── silver.py               # Pulizia e validazione (Pandera)
-│   │   └── gold.py                 # Modellazione Star Schema
-│   └── utils.py                    # Utility di connessione e helper
-├── models/                         # Documentazione tecnica
-│   └── star_schema.md              # Dettagli del modello dati Gold
-├── .env                            # Variabili d'ambiente (path locali)
-├── .gitignore                      # Esclusione file (es. venv, database)
-├── requirements.txt                # Dipendenze Python
-└── README.md                       # Documentazione del progetto
+│   │   ├── bronze.py               # Task Ingestione
+│   │   ├── gold.py                 # Task Modellazione
+│   │   └── silver.py               # Task Validazione (Pandera)
+│   └── utils.py                    # Helper e connessioni DB
+├── models/                         # Documentazione Modelli
+│   └── star_schema.md
+├── .env                            # Variabili d'ambiente (API Keys)
+├── .gitignore                      # Esclusione file Git
+├── ai_utils.py                     # Modulo integrazione Gemini AI
+├── duckdb.exe                      # Eseguibile database CLI
+├── Fase 2 - diario di bordo.pdf    # Documentazione di progetto
+├── README.md                       # Documentazione principale
+└── requirements.txt                # Dipendenze Python
 
 
 ## COME AVVIARE IL PROGETTO
 
 **Prerequisiti**
-- Python installato.ù
+- Python installato.
 - Una chiave API di Google Gemini (da inserire nel file .env).
 
 **Installazione dipendenze**
