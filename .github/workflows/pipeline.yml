@@ -3,7 +3,7 @@ name: Olist Daily Pipeline
 on:
   push:
     branches:
-      - feature/fase2
+      - main
   workflow_dispatch:
   schedule:
     - cron: '0 2 * * *'
@@ -11,6 +11,8 @@ on:
 jobs:
   run-etl:
     runs-on: ubuntu-latest
+    env:
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -22,7 +24,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pandas pyarrow fastparquet duckdb google-genai python-dotenv
+          pip install pandas pyarrow fastparquet duckdb google-genai python-dotenv pandera
 
       - name: Run Incremental Ingestion (Bronze to Silver)
         run: python etl/tasks/bronze_incremental.py
@@ -34,6 +36,6 @@ jobs:
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          git add data/lake/ data/warehouse.duckdb
-          git commit -m "auto: update data lake and warehouse [skip ci]" || echo "No changes to commit"
+          git add -f data/lake/gold/*.parquet 
+          git commit -m "auto: update gold layer [skip ci]" || echo "No changes to commit"
           git push

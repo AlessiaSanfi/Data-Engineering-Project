@@ -15,8 +15,8 @@ duckdb.exe
 .prefect/
 
 # Dati pesanti (Parquet nel Lake)
-data/lake/
-*.parquet
+data/lake/bronze/
+data/lake/silver/
 
 # File di log o temporanei
 *.log
