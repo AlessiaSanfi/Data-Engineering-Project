@@ -4,8 +4,8 @@
 
 # Database DuckDB
 *.duckdb
-*.duckdb.wal
-
+*.duckdb.*
+duckdb.exe
 
 # Ambiente e variabili
 .env
@@ -13,3 +13,10 @@
 
 # Prefect
 .prefect/
+
+# Dati pesanti (Parquet nel Lake)
+data/lake/
+*.parquet
+
+# File di log o temporanei
+*.log
