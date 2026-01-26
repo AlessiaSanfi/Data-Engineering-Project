@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import duckdb
 import os
 import plotly.express as px
 from ai_utils import translate_text_to_sql
@@ -24,11 +25,36 @@ st.title("Olist Business Intelligence Dashboard")
 st.markdown("Analisi professionale delle vendite e della logistica basata sul dataset Olist.")
 
 # ------------------------------------------------------------------
+# --- GESTIONE ERRORI E FILTRI DI SICUREZZA (NUOVA SEZIONE) ---
+# ------------------------------------------------------------------
+parquet_files = [
+    'data/lake/gold/fact_sales.parquet',
+    'data/lake/gold/dim_products.parquet',
+    'data/lake/gold/dim_customers.parquet',
+    'data/lake/gold/dim_time.parquet'
+]
+
+# Verifico se tutti i file necessari esistono
+missing_files = [f for f in parquet_files if not os.path.exists(f)]
+
+if missing_files:
+    st.error("⚠️ **Errore Critico: Dati mancanti nel Data Lake**")
+    st.write(f"I seguenti file Gold non sono stati trovati: `{', '.join(missing_files)}`")
+    st.info("Assicurati di aver eseguito correttamente la pipeline ETL prima di lanciare la dashboard.")
+    st.stop() # Blocca l'esecuzione del resto dell'app
+
+# ------------------------------------------------------------------
 # --- CONNESSIONE DATABASE ---
 # ------------------------------------------------------------------
 
-db_path = os.getenv("DB_PATH", "data/warehouse.duckdb")
-con = get_connection(db_path)
+# Creo una connessione DuckDB in memoria
+con = duckdb.connect(database=':memory:')
+
+# Registriamo i file Gold in modo che le tue query esistenti continuino a funzionare
+con.execute("CREATE VIEW fact_sales AS SELECT * FROM read_parquet('data/lake/gold/fact_sales.parquet')")
+con.execute("CREATE VIEW dim_products AS SELECT * FROM read_parquet('data/lake/gold/dim_products.parquet')")
+con.execute("CREATE VIEW dim_customers AS SELECT * FROM read_parquet('data/lake/gold/dim_customers.parquet')")
+con.execute("CREATE VIEW dim_time AS SELECT * FROM read_parquet('data/lake/gold/dim_time.parquet')")
 
 # ------------------------------------------------------------------
 # --- MAPPE DI DECODIFICA ---
@@ -146,11 +172,11 @@ total_sales, avg_delivery, total_orders, avg_freight = load_kpis(con, query_wher
 spesa_media = total_sales / total_orders if total_orders > 0 else 0
 
 c1, c2, c3, c4, c5 = st.columns(5)
-c1.metric("Fatturato", f"€ {total_sales:,.2f}")
+c1.metric("Fatturato", f"R$ {total_sales:,.2f}")
 c2.metric("Ordini", f"{total_orders:,}")
 c3.metric("Consegna Media", f"{avg_delivery:.1f} gg")
-c4.metric("Spedizione Media", f"€ {avg_freight:.2f}")
-c5.metric("Spesa Media", f"€ {spesa_media:.2f}")
+c4.metric("Spedizione Media", f"R$ {avg_freight:.2f}")
+c5.metric("Spesa Media", f"R$ {spesa_media:.2f}")
 
 st.divider()
 
@@ -308,6 +334,8 @@ if user_query:
 
             # Alias richiesti
             'total_revenue': 'Fatturato Totale',
+            'sum(T1.price)': 'Fatturato Totale',
+            'sum(price)': 'Fatturato Totale',
             'revenue': 'Fatturato',
             'total_orders': 'Totale Ordini',
             'order_count': 'Numero Ordini',
@@ -334,7 +362,17 @@ if user_query:
         
         st.subheader("Risultato")
         if not df_ai.empty:
-            st.dataframe(df_ai, width='stretch')
+            # Creo un oggetto di formattazione per le colonne monetarie
+            format_dict = {}
+            if 'Fatturato Totale' in df_ai.columns:
+                format_dict['Fatturato Totale'] = "R$ {:,.2f}"
+            if 'Prezzo' in df_ai.columns:
+                format_dict['Prezzo'] = "R$ {:,.2f}"
+            if 'Costo Spedizione' in df_ai.columns:
+                format_dict['Costo Spedizione'] = "R$ {:,.2f}"
+
+            # Mostra il dataframe con la formattazione applicata
+            st.dataframe(df_ai.style.format(format_dict), width='stretch')
         else:
             st.warning("La query non ha prodotto risultati.")
             

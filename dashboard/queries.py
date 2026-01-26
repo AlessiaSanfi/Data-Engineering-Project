@@ -12,8 +12,8 @@ def load_kpis(con, query_where):
             AVG(delivery_time_days) as avg_delivery,
             COUNT(DISTINCT order_id) as total_orders,
             AVG(freight_value) as avg_freight
-        FROM gold.fact_sales f
-        JOIN gold.dim_customers c ON f.customer_id = c.customer_id
+        FROM fact_sales f
+        JOIN dim_customers c ON f.customer_id = c.customer_id
         {query_where}
     """).fetchone()
 
@@ -21,9 +21,9 @@ def load_kpis(con, query_where):
 def load_category_data(con, query_where):
     return con.execute(f"""
         SELECT p.product_category_name as Categoria, SUM(f.price) as Fatturato
-        FROM gold.fact_sales f
-        JOIN gold.dim_products p ON f.product_id = p.product_id
-        JOIN gold.dim_customers c ON f.customer_id = c.customer_id
+        FROM fact_sales f
+        JOIN dim_products p ON f.product_id = p.product_id
+        JOIN dim_customers c ON f.customer_id = c.customer_id
         {query_where}
         GROUP BY Categoria ORDER BY Fatturato DESC LIMIT 10
     """).df()
@@ -32,8 +32,8 @@ def load_category_data(con, query_where):
 def load_state_data(con, query_where):
     return con.execute(f"""
         SELECT c.customer_state as Stato, COUNT(DISTINCT f.order_id) as Ordini
-        FROM gold.fact_sales f
-        JOIN gold.dim_customers c ON f.customer_id = c.customer_id
+        FROM fact_sales f
+        JOIN dim_customers c ON f.customer_id = c.customer_id
         {query_where}
         GROUP BY Stato ORDER BY Ordini DESC
     """).df()
@@ -42,8 +42,8 @@ def load_state_data(con, query_where):
 def load_shipping_time_data(con, query_where):
     return con.execute(f"""
         SELECT c.customer_state as Stato, AVG(f.delivery_time_days) as Media_Consegna
-        FROM gold.fact_sales f
-        JOIN gold.dim_customers c ON f.customer_id = c.customer_id
+        FROM fact_sales f
+        JOIN dim_customers c ON f.customer_id = c.customer_id
         {query_where}
         GROUP BY Stato ORDER BY Media_Consegna DESC
     """).df()
@@ -54,8 +54,8 @@ def load_avg_shipping_data(con, query_where):
         SELECT 
             c.customer_state as Stato,
             AVG(f.freight_value) as Media_Spedizione
-        FROM gold.fact_sales f
-        JOIN gold.dim_customers c ON f.customer_id = c.customer_id
+        FROM fact_sales f
+        JOIN dim_customers c ON f.customer_id = c.customer_id
         {query_where}
         GROUP BY Stato
         ORDER BY Media_Spedizione DESC
@@ -66,9 +66,9 @@ def load_trend_data(con, query_where):
     return con.execute(f"""
         SELECT CAST(t.year AS VARCHAR) || '-' || LPAD(CAST(t.month AS VARCHAR), 2, '0') as Periodo,
                SUM(f.price) as Fatturato
-        FROM gold.fact_sales f
-        JOIN gold.dim_time t ON f.order_purchase_timestamp = t.order_purchase_timestamp
-        JOIN gold.dim_customers c ON f.customer_id = c.customer_id
+        FROM fact_sales f
+        JOIN dim_time t ON f.order_purchase_timestamp = t.order_purchase_timestamp
+        JOIN dim_customers c ON f.customer_id = c.customer_id
         {query_where}
         GROUP BY Periodo ORDER BY Periodo
     """).df()
@@ -79,9 +79,9 @@ def load_weekly_seasonality(con, query_where):
         SELECT 
             t.day_of_week as "Giorno della settimana", 
             SUM(f.price) as Fatturato
-        FROM gold.fact_sales f
-        JOIN gold.dim_time t ON f.order_purchase_timestamp = t.order_purchase_timestamp
-        JOIN gold.dim_customers c ON f.customer_id = c.customer_id
+        FROM fact_sales f
+        JOIN dim_time t ON f.order_purchase_timestamp = t.order_purchase_timestamp
+        JOIN dim_customers c ON f.customer_id = c.customer_id
         {query_where}
         GROUP BY 1
         ORDER BY CASE 

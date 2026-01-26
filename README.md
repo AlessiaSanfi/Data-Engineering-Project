@@ -1,12 +1,18 @@
 # BRAZILIAN E-COMMERCE DATA PIPELINE (OLIST)
+
 Questo progetto implementa una pipeline di Data Engineering professionale per l'analisi dei dati di e-commerce brasiliani (dataset Olist). L'obiettivo è trasformare i dati grezzi in un formato ottimizzato per l'analisi di business (KPI su vendite, logistica e performance dei venditori).
+
+**Badge di GitHub Actions**:
+![Olist Daily Pipeline](https://github.com/AlessiaSanfi/Data-Engineering-Project/actions/workflows/pipeline.yml/badge.svg?branch=feature/fase2)
 
 
 ## STACK TECNOLOGICO
 - **Linguaggio:** Python 3.x
-- **Orchestratore:** [Prefect](https://www.prefect.io/) (per gestione dei flussi, monitoraggio e automazione)
+- **Orchestratore:** [Prefect](https://www.prefect.io/) e **GitHub Actions**
 - **Database:** [DuckDB](https://duckdb.org/) (OLAP database in-process)
 - **Data Manipulation:** Polars e Pandas
+- **AI Engine:** Google Gemini Flash (Generazione SQL dinamica)
+- **Data Format:** Apache Parquet (Storage colonnare)
 - **Visualizzazione:** Streamlit
 - **Containerizzazione:** Podman
 
@@ -99,6 +105,8 @@ Il progetto include un modulo avanzato di **Natural Language Processing** che pe
 - **Funzionamento:** Il sistema riceve una domanda in testo libero (es. *"Qual è il fatturato totale per la città di San Paolo?"*), la traduce istantaneamente in una query SQL valida per DuckDB basandosi sulla struttura dello Star Schema Gold, ed esegue l'interrogazione.
 - **Sicurezza:** La logica di generazione è blindata da un sistema di *Prompt Engineering* che vincola l'output al solo schema `gold`, prevenendo allucinazioni o accessi a tabelle non autorizzate.
 
+**Esempio:** *"Qual è il fatturato totale per la città di San Paolo nel 2017?"*
+- L'AI traduce la domanda in una query DuckDB ottimizzata, recupera i dati dal layer Gold e restituisce il risultato formattato in **Real Brasiliani (R$)**.
 
 ## CONTAINERIZZAZIONE (PODMAN)
 Il progetto è interamente containerizzato per garantire l'isolamento e la portabilità. L'architettura utilizza un'unica immagine unificata per gestire sia l'ETL che la Dashboard.
@@ -154,11 +162,16 @@ Data-Engineering-Project/
 ## COME AVVIARE IL PROGETTO
 
 **Prerequisiti**
-Python installato.
+- Python installato.ù
+- Una chiave API di Google Gemini (da inserire nel file .env).
 
 **Installazione dipendenze**
 Installa le librerie necessarie tramite terminale:
   python -m pip install -r requirements.txt.
+
+**Esplorazione Dati**
+Per ispezionare il Layer Gold da terminale:
+  .\duckdb -c "SELECT * FROM 'data/lake/gold/fact_sales.parquet' LIMIT 5;"
 
 **Esecuzione della Pipeline**
 Per avviare l'intero processo, esegui:

@@ -12,16 +12,18 @@ def translate_text_to_sql(user_prompt):
     # Context per istruire il modello sullo Star Schema Gold
     context = """
     Sei un esperto SQL per DuckDB. Il database segue uno Star Schema con queste tabelle:
-    1. gold.fact_sales: [order_id, customer_id, product_id, price, freight_value, delivery_time_days, order_purchase_timestamp]
-    2. gold.dim_products: [product_id, product_category_name]
-    3. gold.dim_customers: [customer_id, customer_city, customer_state]
-    4. gold.dim_time: [order_purchase_timestamp, year, month, day_of_week]
-    
+    1. fact_sales: [order_id, customer_id, product_id, price, freight_value, delivery_time_days, order_purchase_timestamp]
+    2. dim_products: [product_id, product_category_name]
+    3. dim_customers: [customer_id, customer_city, customer_state]
+    4. dim_time: [order_purchase_timestamp, year, month, day_of_week]
+
     REGOLE:
     - Restituisci SOLO la query SQL pura.
     - Non usare blocchi di codice markdown (niente ```sql).
-    - Usa i nomi completi delle tabelle con lo schema 'gold'.
-    - Se l'utente chiede il fatturato, usa SUM(price).
+    - NON USARE prefissi come 'gold.' davanti ai nomi delle tabelle.
+    - Se l'utente chiede il fatturato, usa SEMPRE: SUM(price) AS total_revenue.
+    - Se l'utente chiede il numero di ordini, usa SEMPRE: COUNT(DISTINCT order_id) AS total_orders.
+    - Non formattare i numeri con simboli di valuta dentro la query SQL.
     """
     
     response = client.models.generate_content(
