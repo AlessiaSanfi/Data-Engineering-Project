@@ -25,7 +25,7 @@ st.title("Olist Business Intelligence Dashboard")
 st.markdown("Analisi professionale delle vendite e della logistica basata sul dataset Olist.")
 
 # ------------------------------------------------------------------
-# --- GESTIONE ERRORI E FILTRI DI SICUREZZA (NUOVA SEZIONE) ---
+# --- GESTIONE ERRORI E FILTRI DI SICUREZZA ---
 # ------------------------------------------------------------------
 parquet_files = [
     'data/lake/gold/fact_sales.parquet',
@@ -50,7 +50,7 @@ if missing_files:
 # Creo una connessione DuckDB in memoria
 con = duckdb.connect(database=':memory:')
 
-# Registriamo i file Gold in modo che le tue query esistenti continuino a funzionare
+# Registro i file Gold in modo che le tue query esistenti continuino a funzionare
 con.execute("CREATE VIEW fact_sales AS SELECT * FROM read_parquet('data/lake/gold/fact_sales.parquet')")
 con.execute("CREATE VIEW dim_products AS SELECT * FROM read_parquet('data/lake/gold/dim_products.parquet')")
 con.execute("CREATE VIEW dim_customers AS SELECT * FROM read_parquet('data/lake/gold/dim_customers.parquet')")
@@ -307,7 +307,7 @@ if user_query:
         
         # --- LOGICA DI MAPPATURA COLONNE ---
         
-        #Applichiamo la mappatura dei valori (Stati e Categorie)
+        #Applico la mappatura dei valori (Stati e Categorie)
         if 'customer_state' in df_ai.columns:
             df_ai['customer_state'] = df_ai['customer_state'].map(mappa_stati).fillna(df_ai['customer_state'])
         

@@ -4,7 +4,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # --- AGGIUNTA LOGICA PER TROVARE LA ROOT ---
-# Risaliamo di un livello per vedere la cartella 'Data-Engineering-Project'
+# Risale di un livello per vedere la cartella 'Data-Engineering-Project'
 root_path = Path(__file__).parent.parent
 sys.path.append(str(root_path))
 
@@ -16,7 +16,7 @@ os.environ["PREFECT_SERVER_ALLOW_EPHEMERAL_MODE"] = "True"
 from etl.flows.main_flows import main_flow
 
 if __name__ == "__main__":
-    # Cerchiamo il .env nella root del progetto
+    # Cerca il .env nella root del progetto
     load_dotenv(dotenv_path=root_path / ".env")
     
     db_path = os.getenv("DB_PATH", "data/warehouse.duckdb")

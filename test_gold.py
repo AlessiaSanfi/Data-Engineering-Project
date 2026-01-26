@@ -1,3 +1,8 @@
+#--------------------------------------------------------------
+# Script di test per verificare la corretta costruzione del Gold Layer.
+# Controlla che le tabelle Gold siano accessibili e che le query di base funzionino.
+#--------------------------------------------------------------
+
 import duckdb
 import pandas as pd
 
@@ -7,7 +12,7 @@ def test_gold_layer():
     
     print("--- TEST STRUTTURA GOLD LAYER ---")
     try:
-        # 2. Creazione View (come in app.py)
+        # 2. Creazione View
         con.execute("CREATE VIEW fact_sales AS SELECT * FROM read_parquet('data/lake/gold/fact_sales.parquet')")
         con.execute("CREATE VIEW dim_time AS SELECT * FROM read_parquet('data/lake/gold/dim_time.parquet')")
         print("View create correttamente.")
@@ -18,7 +23,7 @@ def test_gold_layer():
         print(columns[['column_name', 'column_type']])
 
         # 4. Test della Query di Trend (quella di queries.py)
-        # Verifichiamo se il JOIN funziona e se year/month sono utilizzabili
+        # Verifico se il JOIN funziona e se year/month sono utilizzabili
         test_query = """
             SELECT 
                 CAST(t.year AS VARCHAR) || '-' || LPAD(CAST(t.month AS VARCHAR), 2, '0') as Periodo,

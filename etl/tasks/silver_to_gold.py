@@ -1,10 +1,3 @@
-#--------------------------------------------------------------
-# Script per trasformare i dati dal layer Silver al layer Gold in uno schema a stella.
-## Source of Truth: I dati finali (Gold) risiedono nel Data Lake come Parquet, non sono bloccati dentro DuckDB.
-## Performance: DuckDB viene usato come motore di calcolo "volante" per trasformare i file, sfruttando la velocità dei formati colonnari.
-## Flessibilità: Se il database DuckDB si corrompe, puoi ricostruire tutto in pochi secondi leggendo i file Gold.
-#--------------------------------------------------------------
-
 import duckdb
 import os
 

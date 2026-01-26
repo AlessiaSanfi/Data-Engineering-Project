@@ -18,7 +18,7 @@ def main_flow(db_path: str):
     print("--- Avvio Fase Silver ---")
     clean_olist_data(db_path)
 
-    # 3. GOLD (costruzione schema a stella)
+    # 3. GOLD (costruzione star schema)
     print("--- Avvio Fase Gold ---")
     build_olist_star_schema(db_path)
 

@@ -1,8 +1,8 @@
 #--------------------------------------------------------------
 # Script per simulare l'invio giornaliero di dati nella Landing Zone.
-## Formato Colonnare: Ho soddisfatto il requisito di usare Parquet, che è molto più efficiente dei CSV per i Data Lake.
+## Formato Colonnare: Uso Parquet, che è più efficiente dei CSV per i Data Lake.
 ## Organizzazione per data: I dati degli ordini non sono più un unico blocco, ma sono "partizionati" logicamente per mese (orders_2017-01.parquet, orders_2017-02.parquet, ecc.).
-## Punto di Partenza: La landing_zone ora contiene la nostra "fonte di verità".
+## Punto di Partenza: La landing_zone ora contiene la "fonte di verità".
 #--------------------------------------------------------------
 
 import pandas as pd

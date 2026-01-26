@@ -1,10 +1,3 @@
-#--------------------------------------------------------------
-# Questo script esegue un caricamento incrementale dei file Parquet dalla Landing Zone al layer Silver, assicurando che i file già processati non vengano riprocessati.
-## Scansione: Lo script guarda tutti i file .parquet nella landing_zone.
-## Confronto: Verifica quali file sono già stati processati (possiamo farlo salvando un piccolo file di registro o controllando le date nel DB).
-## Ingestion: Carica solo i file mancanti, li converte in uno schema standard e li salva nel layer data/lake/silver/.
-#--------------------------------------------------------------
-
 import duckdb
 import os
 import glob
@@ -32,8 +25,8 @@ def validate_data(df, file_name):
     chiavi_critiche = ['order_id', 'product_id', 'customer_id']
     for col in chiavi_critiche:
         if col in df.columns and df[col].isnull().any():
-            print(f"⚠️ Avviso: Trovati valori nulli in {col} nel file {file_name}")
-            # Qui potresti decidere di bloccare tutto con un raise o solo loggare
+            # Se la colonna ha nulli, lancio un errore bloccante
+            raise ValueError(f"Integrità violata: Trovati valori nulli nella chiave {col} del file {file_name}. Processo interrotto.")
 
 # Funzione principale per il caricamento incrementale
 def run_bronze_incremental():
