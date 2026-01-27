@@ -14,9 +14,12 @@ duckdb.exe
 # Prefect
 .prefect/
 
-# Dati pesanti (Parquet nel Lake)
+# Dati pesanti
 data/lake/bronze/
 data/lake/silver/
+
+# Eccezione per permettere l'invio dei file della landing zone
+!data/lake/bronze/landing_zone/*.parquet
 
 # File di log o temporanei
 *.log
