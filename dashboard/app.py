@@ -38,7 +38,7 @@ parquet_files = [
 missing_files = [f for f in parquet_files if not os.path.exists(f)]
 
 if missing_files:
-    st.error("⚠️ **Errore Critico: Dati mancanti nel Data Lake**")
+    st.error("**Errore Critico: Dati mancanti nel Data Lake**")
     st.write(f"I seguenti file Gold non sono stati trovati: `{', '.join(missing_files)}`")
     st.info("Assicurati di aver eseguito correttamente la pipeline ETL prima di lanciare la dashboard.")
     st.stop() # Blocca l'esecuzione del resto dell'app
@@ -85,7 +85,7 @@ mappa_categorie = {
     'bebidas': 'Bevande',
     'beleza_saude': 'Bellezza & Salute',
     'brinquedos': 'Giocattoli',
-    'cama_mesa_banho': 'Casa & Arredo (Biancheria)',
+    'cama_mesa_banho': 'Casa & Arredo',
     'casa_conforto': 'Comfort Casa',
     'casa_conforto_2': 'Comfort Casa 2',
     'casa_construcao': 'Casa & Costruzioni',
@@ -109,9 +109,10 @@ mappa_categorie = {
 # ------------------------------------------------------------------
 
 # Funzione per disegnare un bar chart statico con tooltip personalizzati
-def draw_static_bar(df, x_col, y_col, color="#4682B4", orient="v", height=300, label_y=None):
+def draw_static_bar(df, x_col, y_col, color="#4682B4", orient="v", height=300, label_y=None, label_x=None):
     """Renderizza un bar chart statico con tooltip personalizzati."""
-    friendly_name = label_y if label_y else y_col
+    friendly_name_y = label_y if label_y else y_col
+    friendly_name_x = label_x if label_x else x_col
     
     x_enc = {'field': x_col, 'type': 'nominal', 'title': None} if orient == "v" else {'field': y_col, 'type': 'quantitative', 'title': None}
     y_enc = {'field': y_col, 'type': 'quantitative', 'title': None} if orient == "v" else {'field': x_col, 'type': 'nominal', 'title': None}
@@ -124,8 +125,8 @@ def draw_static_bar(df, x_col, y_col, color="#4682B4", orient="v", height=300, l
             'x': x_enc,
             'y': y_enc,
             'tooltip': [
-                {'field': x_col, 'type': 'nominal', 'title': 'Stato'},
-                {'field': y_col, 'type': 'quantitative', 'title': friendly_name, 'format': '.2f'}
+                {'field': x_col, 'type': 'nominal', 'title': friendly_name_x},
+                {'field': y_col, 'type': 'quantitative', 'title': friendly_name_y, 'format': '.2f'}
             ]
         },
         'config': {
@@ -247,7 +248,7 @@ with col_shipping_time:
     df_shipping_time = load_shipping_time_data(con, query_where)
     if not df_shipping_time.empty:
         df_shipping_time['Stato Esteso'] = df_shipping_time['Stato'].map(mappa_stati)
-        draw_static_bar(df_shipping_time, 'Stato Esteso', 'Media_Consegna', color="#FF7F50", orient="h", label_y="Tempi di consegna")
+        draw_static_bar(df_shipping_time, 'Stato Esteso', 'Tempi_Consegna', color="#FF7F50", orient="h", label_y="Tempi di consegna (gg)")
     else:
         st.info("Dati sui tempi di consegna non disponibili.")
 
@@ -257,7 +258,7 @@ with col_shipping_price:
     df_shipping = load_avg_shipping_data(con, query_where)
     if not df_shipping.empty:
         df_shipping['Stato Esteso'] = df_shipping['Stato'].map(mappa_stati) 
-        draw_static_bar(df_shipping, 'Stato Esteso', 'Media_Spedizione', color="#9370DB", orient="h", label_y="Costi di spedizione")
+        draw_static_bar(df_shipping, 'Stato Esteso', 'Costo_Spedizione', color="#9370DB", orient="h", label_y="Costi di spedizione")
     else:
         st.info("Dati sui costi di spedizione non disponibili.")
 
@@ -282,8 +283,8 @@ with col_weekly:
     df_weekly = load_weekly_seasonality(con, query_where)
     if not df_weekly.empty:
         ordine_giorni = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        df_weekly['Giorno della settimana'] = pd.Categorical(df_weekly['Giorno della settimana'], categories=ordine_giorni, ordered=True)
-        draw_static_bar(df_weekly.sort_values('Giorno della settimana'), 'Giorno della settimana', 'Fatturato', color="#2E8B57")
+        df_weekly['Giorno_della_settimana'] = pd.Categorical(df_weekly['Giorno_della_settimana'], categories=ordine_giorni, ordered=True)
+        draw_static_bar(df_weekly.sort_values('Giorno_della_settimana'), 'Giorno_della_settimana', 'Fatturato', color="#2E8B57", label_x="Giorno della settimana")
     else:
         st.info("Dati di stagionalità settimanale non disponibili.")
 

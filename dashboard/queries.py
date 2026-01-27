@@ -41,11 +41,11 @@ def load_state_data(con, query_where):
 # Funzione per caricare i dati sui tempi di consegna
 def load_shipping_time_data(con, query_where):
     return con.execute(f"""
-        SELECT c.customer_state as Stato, AVG(f.delivery_time_days) as Media_Consegna
+        SELECT c.customer_state as Stato, AVG(f.delivery_time_days) as Tempi_Consegna
         FROM fact_sales f
         JOIN dim_customers c ON f.customer_id = c.customer_id
         {query_where}
-        GROUP BY Stato ORDER BY Media_Consegna DESC
+        GROUP BY Stato ORDER BY Tempi_Consegna DESC
     """).df()
 
 # Funzione per caricare i dati sul costo medio di spedizione
@@ -53,12 +53,12 @@ def load_avg_shipping_data(con, query_where):
     return con.execute(f"""
         SELECT 
             c.customer_state as Stato,
-            AVG(f.freight_value) as Media_Spedizione
+            AVG(f.freight_value) as Costo_Spedizione
         FROM fact_sales f
         JOIN dim_customers c ON f.customer_id = c.customer_id
         {query_where}
         GROUP BY Stato
-        ORDER BY Media_Spedizione DESC
+        ORDER BY Costo_Spedizione DESC
     """).df()
 
 # Funzione per caricare i dati di trend temporale
@@ -77,7 +77,7 @@ def load_trend_data(con, query_where):
 def load_weekly_seasonality(con, query_where):
     return con.execute(f"""
         SELECT 
-            t.day_of_week as "Giorno della settimana", 
+            t.day_of_week as "Giorno_della_settimana", 
             SUM(f.price) as Fatturato
         FROM fact_sales f
         JOIN dim_time t ON f.order_purchase_timestamp = t.order_purchase_timestamp
@@ -85,11 +85,11 @@ def load_weekly_seasonality(con, query_where):
         {query_where}
         GROUP BY 1
         ORDER BY CASE 
-            WHEN "Giorno della settimana" = 'Monday' THEN 1 
-            WHEN "Giorno della settimana" = 'Tuesday' THEN 2
-            WHEN "Giorno della settimana" = 'Wednesday' THEN 3 
-            WHEN "Giorno della settimana" = 'Thursday' THEN 4
-            WHEN "Giorno della settimana" = 'Friday' THEN 5 
-            WHEN "Giorno della settimana" = 'Saturday' THEN 6
-            WHEN "Giorno della settimana" = 'Sunday' THEN 7 END
+            WHEN Giorno_della_settimana = 'Monday' THEN 1 
+            WHEN Giorno_della_settimana = 'Tuesday' THEN 2
+            WHEN Giorno_della_settimana = 'Wednesday' THEN 3 
+            WHEN Giorno_della_settimana = 'Thursday' THEN 4
+            WHEN Giorno_della_settimana = 'Friday' THEN 5 
+            WHEN Giorno_della_settimana = 'Saturday' THEN 6
+            WHEN Giorno_della_settimana = 'Sunday' THEN 7 END
     """).df()

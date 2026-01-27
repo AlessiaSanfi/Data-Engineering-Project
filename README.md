@@ -195,3 +195,10 @@ La pipeline alimenta una dashboard interattiva sviluppata in Streamlit, che perm
 Per avviarla, eseguire il comando:
     
     python -m streamlit run dashboard/app.py
+
+
+## LIVE DASHBOARD
+La dashboard è pubblicata e consultabile online al seguente indirizzo:
+**[Olist Business Intelligence Dashboard](https://data-engineering-project-olist.streamlit.app/)**
+
+*Nota: La dashboard si aggiorna automaticamente ogni mattina a seguito dell'esecuzione della pipeline notturna.*
