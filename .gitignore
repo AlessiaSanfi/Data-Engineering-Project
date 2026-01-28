@@ -21,5 +21,9 @@ data/lake/silver/
 # Eccezione per permettere l'invio dei file della landing zone
 !data/lake/bronze/landing_zone/*.parquet
 
+# Sblocca i file necessari per la pipeline online
+!data/lake/silver/*.parquet
+!data/lake/gold/*.parquet
+
 # File di log o temporanei
 *.log
