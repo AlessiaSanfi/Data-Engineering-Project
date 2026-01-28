@@ -24,6 +24,11 @@ st.set_page_config(page_title="Olist E-Commerce Dashboard", layout="wide")
 st.title("Olist Business Intelligence Dashboard")
 st.markdown("Analisi professionale delle vendite e della logistica basata sul dataset Olist.")
 
+# TEST RAPIDO
+con_test = get_connection('data/lake/gold/fact_sales.parquet')
+count_sep = con_test.execute("SELECT count(*) FROM fact_sales WHERE CAST(order_purchase_timestamp AS VARCHAR) LIKE '2018-09%'").fetchone()[0]
+st.sidebar.write(f"Righe settembre caricate: {count_sep}")
+
 # ------------------------------------------------------------------
 # --- GESTIONE ERRORI E FILTRI DI SICUREZZA ---
 # ------------------------------------------------------------------
