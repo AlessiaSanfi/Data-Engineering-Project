@@ -55,7 +55,7 @@ def run_silver_to_gold():
         order_purchase_timestamp,
         extract(year from CAST(order_purchase_timestamp AS TIMESTAMP)) as year,
         extract(month from CAST(order_purchase_timestamp AS TIMESTAMP)) as month,
-        dayname(CAST(order_purchase_timestamp AS TIMESTAMP)) as Giorno_della_settimana
+        dayname(CAST(order_purchase_timestamp AS TIMESTAMP)) as day_of_week
     FROM orders
     """
     con.execute(f"COPY ({dim_time_query}) TO '{GOLD_DIR}dim_time.parquet' (FORMAT PARQUET)")

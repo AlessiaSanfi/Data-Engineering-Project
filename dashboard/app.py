@@ -283,8 +283,8 @@ with col_weekly:
     df_weekly = load_weekly_seasonality(con, query_where)
     if not df_weekly.empty:
         ordine_giorni = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        df_weekly['Giorno_della_settimana'] = pd.Categorical(df_weekly['Giorno_della_settimana'], categories=ordine_giorni, ordered=True)
-        draw_static_bar(df_weekly.sort_values('Giorno_della_settimana'), 'Giorno_della_settimana', 'Fatturato', color="#2E8B57", label_x="Giorno della settimana")
+        df_weekly['day_of_week'] = pd.Categorical(df_weekly['day_of_week'], categories=ordine_giorni, ordered=True)
+        draw_static_bar(df_weekly.sort_values('day_of_week'), 'day_of_week', 'Fatturato', color="#2E8B57", label_x="Giorno della settimana")
     else:
         st.info("Dati di stagionalità settimanale non disponibili.")
 

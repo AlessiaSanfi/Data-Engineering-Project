@@ -77,7 +77,7 @@ def load_trend_data(con, query_where):
 def load_weekly_seasonality(con, query_where):
     return con.execute(f"""
         SELECT 
-            t.day_of_week as "Giorno_della_settimana", 
+            t.day_of_week as "day_of_week", 
             SUM(f.price) as Fatturato
         FROM fact_sales f
         JOIN dim_time t ON f.order_purchase_timestamp = t.order_purchase_timestamp
@@ -85,11 +85,11 @@ def load_weekly_seasonality(con, query_where):
         {query_where}
         GROUP BY 1
         ORDER BY CASE 
-            WHEN Giorno_della_settimana = 'Monday' THEN 1 
-            WHEN Giorno_della_settimana = 'Tuesday' THEN 2
-            WHEN Giorno_della_settimana = 'Wednesday' THEN 3 
-            WHEN Giorno_della_settimana = 'Thursday' THEN 4
-            WHEN Giorno_della_settimana = 'Friday' THEN 5 
-            WHEN Giorno_della_settimana = 'Saturday' THEN 6
-            WHEN Giorno_della_settimana = 'Sunday' THEN 7 END
+            WHEN t.day_of_week = 'Monday' THEN 1 
+            WHEN t.day_of_week = 'Tuesday' THEN 2
+            WHEN t.day_of_week = 'Wednesday' THEN 3 
+            WHEN t.day_of_week = 'Thursday' THEN 4
+            WHEN t.day_of_week = 'Friday' THEN 5 
+            WHEN t.day_of_week = 'Saturday' THEN 6
+            WHEN t.day_of_week = 'Sunday' THEN 7 END
     """).df()
