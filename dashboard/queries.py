@@ -64,13 +64,15 @@ def load_avg_shipping_data(con, query_where):
 # Funzione per caricare i dati di trend temporale
 def load_trend_data(con, query_where):
     return con.execute(f"""
-        SELECT CAST(t.year AS VARCHAR) || '-' || LPAD(CAST(t.month AS VARCHAR), 2, '0') as Periodo,
-               SUM(f.price) as Fatturato
+        SELECT 
+            CAST(t.year AS VARCHAR) || '-' || LPAD(CAST(t.month AS VARCHAR), 2, '0') as Periodo,
+            SUM(f.price) as Fatturato
         FROM fact_sales f
         JOIN dim_time t ON f.order_purchase_timestamp = t.order_purchase_timestamp
         JOIN dim_customers c ON f.customer_id = c.customer_id
         {query_where}
-        GROUP BY Periodo ORDER BY Periodo
+        GROUP BY Periodo 
+        ORDER BY Periodo
     """).df()
 
 # Funzione per caricare i dati di stagionalità settimanale

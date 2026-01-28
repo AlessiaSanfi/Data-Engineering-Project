@@ -291,12 +291,16 @@ col_trend, col_weekly = st.columns(2)
 
 # Trend Temporale delle Vendite da sttembre 2016 a ottobre (agosto) 2018
 with col_trend:
-    st.subheader("Trend Temporale delle Vendite")
+    st.subheader("Trend Temporale Fatturato")
     df_trend = load_trend_data(con, query_where)
     if not df_trend.empty:
-        draw_static_line(df_trend, 'Periodo', 'Fatturato', color="#4682B4")
-    else:
-        st.info("Trend temporale non disponibile per la selezione attuale.")
+        # Debug rapido: stampiamo le ultime 3 righe del dataframe sotto il grafico
+        st.write(df_trend.tail(3)) 
+        
+        fig_trend = px.line(df_trend, x='Periodo', y='Fatturato', markers=True)
+        # Forziamo Plotly a non tagliare l'asse X
+        fig_trend.update_xaxes(type='category') 
+        st.plotly_chart(fig_trend, use_container_width=True)
 
 # Stagionalità Settimanale
 with col_weekly:
