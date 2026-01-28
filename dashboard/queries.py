@@ -83,7 +83,8 @@ def load_weekly_seasonality(con, query_where):
             t.day_of_week as "day_of_week", 
             SUM(f.price) as Fatturato
         FROM fact_sales f
-        JOIN dim_time t ON f.order_purchase_timestamp = t.order_purchase_timestamp
+        -- Applichiamo il CAST a DATE anche qui per recuperare settembre
+        JOIN dim_time t ON CAST(f.order_purchase_timestamp AS DATE) = CAST(t.order_purchase_timestamp AS DATE)
         JOIN dim_customers c ON f.customer_id = c.customer_id
         {query_where}
         GROUP BY 1
