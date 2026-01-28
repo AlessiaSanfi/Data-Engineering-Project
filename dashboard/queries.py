@@ -68,7 +68,8 @@ def load_trend_data(con, query_where):
             CAST(t.year AS VARCHAR) || '-' || LPAD(CAST(t.month AS VARCHAR), 2, '0') as Periodo,
             SUM(f.price) as Fatturato
         FROM fact_sales f
-        JOIN dim_time t ON f.order_purchase_timestamp = t.order_purchase_timestamp
+        -- TRICK: Castiamo entrambi i campi a DATE per ignorare l'orario nel JOIN
+        JOIN dim_time t ON CAST(f.order_purchase_timestamp AS DATE) = CAST(t.order_purchase_timestamp AS DATE)
         JOIN dim_customers c ON f.customer_id = c.customer_id
         {query_where}
         GROUP BY Periodo 

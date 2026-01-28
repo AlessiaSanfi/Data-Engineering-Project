@@ -25,27 +25,6 @@ st.title("Olist Business Intelligence Dashboard")
 st.markdown("Analisi professionale delle vendite e della logistica basata sul dataset Olist.")
 
 # ------------------------------------------------------------------
-# --- TEST DI DEBUG CORRETTO ---
-# ------------------------------------------------------------------
-try:
-    # Usiamo una connessione temporanea in memoria per leggere il file esterno
-    temp_con = duckdb.connect(':memory:')
-    path_to_check = 'data/lake/gold/fact_sales.parquet'
-    
-    if os.path.exists(path_to_check):
-        count_sep = temp_con.execute(f"""
-            SELECT count(*) 
-            FROM read_parquet('{path_to_check}') 
-            WHERE CAST(order_purchase_timestamp AS VARCHAR) LIKE '2018-09%'
-        """).fetchone()[0]
-        st.sidebar.metric("Righe Settembre (Debug)", count_sep)
-    else:
-        st.sidebar.error("File Gold non trovato sul server!")
-except Exception as e:
-    st.sidebar.warning(f"Errore durante il debug: {e}")
-# ------------------------------
-
-# ------------------------------------------------------------------
 # --- GESTIONE ERRORI E FILTRI DI SICUREZZA ---
 # ------------------------------------------------------------------
 parquet_files = [
