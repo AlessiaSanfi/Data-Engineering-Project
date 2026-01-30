@@ -29,7 +29,7 @@ prefect_local.db-shm
 # =================================================
 # Data layers (never version raw or derived data)
 # =================================================
-data/raw/
+# data/raw/
 data/lake/landing_zone/
 data/lake/bronze/
 data/lake/silver/
