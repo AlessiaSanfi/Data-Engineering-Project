@@ -27,18 +27,23 @@ def build_olist_star_schema(db_path):
         FROM silver.products
     """)
 
-    # DIM_TIME
+    # DIM_TIME (DAILY GRAIN: 1 riga per giorno)
     con.execute("""
         CREATE OR REPLACE TABLE gold.dim_time AS
+        WITH base AS (
+            SELECT
+                CAST(order_purchase_timestamp AS DATE) AS order_date
+            FROM silver.orders
+            WHERE order_purchase_timestamp IS NOT NULL
+        )
         SELECT DISTINCT
-            order_purchase_timestamp,
-            EXTRACT(day FROM order_purchase_timestamp) AS day,
-            EXTRACT(month FROM order_purchase_timestamp) AS month,
-            EXTRACT(year FROM order_purchase_timestamp) AS year,
-            EXTRACT(quarter FROM order_purchase_timestamp) AS quarter,
-            DAYNAME(order_purchase_timestamp) AS day_of_week
-        FROM silver.orders
-        WHERE order_purchase_timestamp IS NOT NULL
+            order_date,
+            EXTRACT(day FROM order_date) AS day,
+            EXTRACT(month FROM order_date) AS month,
+            EXTRACT(year FROM order_date) AS year,
+            EXTRACT(quarter FROM order_date) AS quarter,
+            DAYNAME(order_date) AS day_of_week
+        FROM base
     """)
 
     # FACT_SALES

@@ -1,29 +1,39 @@
-# Python bytecode
+# -------------------------
+# Python
+# -------------------------
 **/__pycache__/
 *.py[cod]
 
-# Database DuckDB
+# -------------------------
+# Virtual env / env vars
+# -------------------------
+.venv/
+.env
+
+# -------------------------
+# DuckDB database files
+# -------------------------
 *.duckdb
 *.duckdb.*
 duckdb.exe
 
-# Ambiente e variabili
-.env
-.venv/
-
-# Prefect
+# -------------------------
+# Prefect local artifacts
+# -------------------------
 .prefect/
+prefect_local.db
+prefect_local.db-*
+*.db
+*.db-*
 
-# Dati pesanti
-data/lake/bronze/
-data/lake/silver/
+# -------------------------
+# Data (keep repo light)
+# -------------------------
+data/raw/
+data/lake/
+data/warehouse.duckdb
 
-# Eccezione per permettere l'invio dei file della landing zone
-!data/lake/bronze/landing_zone/*.parquet
-
-# Sblocca i file necessari per la pipeline online
-!data/lake/silver/*.parquet
-!data/lake/gold/*.parquet
-
-# File di log o temporanei
+# -------------------------
+# Logs / temp
+# -------------------------
 *.log
