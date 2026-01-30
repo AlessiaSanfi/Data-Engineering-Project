@@ -74,10 +74,6 @@ if missing:
     con.close()
     st.stop()
 
-# ✅ IMPORTANTISSIMO:
-# Niente CREATE VIEW in read-only.
-# queries.py punta già direttamente a gold.fact_sales e gold.dim_*
-
 # ------------------------------------------------------------------
 # --- MAPPE DI DECODIFICA ---
 # ------------------------------------------------------------------

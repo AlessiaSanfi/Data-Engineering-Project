@@ -6,8 +6,7 @@ on:
       - main
   workflow_dispatch:
   schedule:
-    # GitHub Actions cron è in UTC. Esempio: ogni giorno alle 06:00 UTC
-    - cron: "0 2 * * *"
+    - cron: "0 2 * * *"   # ogni giorno alle 02:00 UTC
 
 jobs:
   run-phase2:
@@ -18,58 +17,72 @@ jobs:
       GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      # 1️⃣ Checkout con supporto LFS
+      - name: Checkout repository (with LFS)
+        uses: actions/checkout@v4
         with:
           lfs: true
           fetch-depth: 0
 
-      - name: Setup Git LFS
+      # 2️⃣ FORZA download file LFS (CSV)
+      - name: Pull Git LFS files
         run: |
           git lfs install
           git lfs pull
 
+      # 3️⃣ Setup Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
           cache: "pip"
 
+      # 4️⃣ Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # 5️⃣ Run pipeline Phase 2
       - name: Run Phase 2 pipeline (landing -> bronze -> silver -> gold)
         run: |
           python etl/flows/main_flows_fase2.py
 
+      # 6️⃣ Smoke test: tabelle GOLD
       - name: Smoke check - gold tables exist
         run: |
           python - << 'PY'
           import os, duckdb
+
           db_path = os.getenv("DB_PATH", "data/warehouse.duckdb")
           con = duckdb.connect(db_path, read_only=True)
 
-          required = [("gold","fact_sales"),("gold","dim_products"),("gold","dim_customers"),("gold","dim_time")]
+          required = [
+              ("gold","fact_sales"),
+              ("gold","dim_products"),
+              ("gold","dim_customers"),
+              ("gold","dim_time")
+          ]
+
           missing = []
           for s,t in required:
-            ok = con.execute("""
-              SELECT 1
-              FROM information_schema.tables
-              WHERE table_schema=? AND table_name=?
-              LIMIT 1
-            """,[s,t]).fetchone()
-            if not ok:
-              missing.append(f"{s}.{t}")
+              ok = con.execute("""
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema=? AND table_name=?
+                LIMIT 1
+              """,[s,t]).fetchone()
+              if not ok:
+                  missing.append(f"{s}.{t}")
+
           if missing:
-            con.close()
-            raise SystemExit(f"Missing gold tables: {missing}")
+              raise SystemExit(f"Missing gold tables: {missing}")
 
           print("OK: gold tables present")
           con.close()
           PY
 
+      # 7️⃣ Stampa conteggi (debug utile)
       - name: Print row counts (bronze/silver/gold)
         run: |
           python - << 'PY'
@@ -98,6 +111,7 @@ jobs:
           con.close()
           PY
 
+      # 8️⃣ Upload DB come artifact
       - name: Upload DuckDB warehouse as artifact
         uses: actions/upload-artifact@v4
         with:
