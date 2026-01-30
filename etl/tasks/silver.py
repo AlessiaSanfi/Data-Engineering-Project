@@ -60,7 +60,7 @@ def clean_olist_data(db_path):
         # 3. Altre tabelle: copia pulita
         con.execute("CREATE OR REPLACE TABLE silver.products AS SELECT * FROM bronze.products")
         con.execute("CREATE OR REPLACE TABLE silver.customers AS SELECT * FROM bronze.customers")
-        con.execute("CREATE OR REPLACE TABLE silver.sellers AS SELECT * FROM bronze.sellers")
+        ## con.execute("CREATE OR REPLACE TABLE silver.sellers AS SELECT * FROM bronze.sellers")
     
         return "Silver Layer validato e completato"
     finally:

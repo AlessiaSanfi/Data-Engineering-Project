@@ -23,6 +23,7 @@ def main_flow(db_path: str):
     build_olist_star_schema(db_path)
 
     print("--- PIPELINE COMPLETATA CON SUCCESSO ---")
+    
 
 # Esecuzione del flusso principale se eseguito come script
 if __name__ == "__main__":
