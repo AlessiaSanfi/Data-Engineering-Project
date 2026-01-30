@@ -3,6 +3,7 @@ import pandas as pd
 import duckdb
 import os
 import plotly.express as px
+
 from ai_utils import translate_text_to_sql
 from queries import (
     load_kpis,
@@ -21,7 +22,6 @@ CURRENCY_SYMBOL = "R$"
 # ------------------------------------------------------------------
 
 st.set_page_config(page_title="Olist E-Commerce Dashboard (Phase 2)", layout="wide")
-
 st.title("Olist Business Intelligence Dashboard (Phase 2)")
 st.markdown("Dashboard basata sul **Gold Layer nel DuckDB** (pipeline incrementale Phase 2).")
 
@@ -38,6 +38,7 @@ if not os.path.exists(DB_PATH):
     st.stop()
 
 try:
+    # Read-only: compatibile anche con Streamlit Cloud
     con = duckdb.connect(DB_PATH, read_only=True)
 except Exception as e:
     st.error("**Errore Critico: Impossibile aprire il database DuckDB**")
@@ -53,12 +54,15 @@ required_gold_tables = [
 
 missing = []
 for schema, table in required_gold_tables:
-    exists = con.execute("""
+    exists = con.execute(
+        """
         SELECT 1
         FROM information_schema.tables
         WHERE table_schema = ? AND table_name = ?
         LIMIT 1
-    """, [schema, table]).fetchone()
+        """,
+        [schema, table],
+    ).fetchone()
     if not exists:
         missing.append(f"{schema}.{table}")
 
@@ -70,11 +74,9 @@ if missing:
     con.close()
     st.stop()
 
-# VIEW compatibili con queries.py (queries.py continua a usare fact_sales/dim_* senza conoscere gold.*)
-con.execute("CREATE OR REPLACE VIEW fact_sales AS SELECT * FROM gold.fact_sales")
-con.execute("CREATE OR REPLACE VIEW dim_products AS SELECT * FROM gold.dim_products")
-con.execute("CREATE OR REPLACE VIEW dim_customers AS SELECT * FROM gold.dim_customers")
-con.execute("CREATE OR REPLACE VIEW dim_time AS SELECT * FROM gold.dim_time")
+# ✅ IMPORTANTISSIMO:
+# Niente CREATE VIEW in read-only.
+# queries.py punta già direttamente a gold.fact_sales e gold.dim_*
 
 # ------------------------------------------------------------------
 # --- MAPPE DI DECODIFICA ---
@@ -151,17 +153,6 @@ def draw_static_bar(df, x_col, y_col, color="#4682B4", orient="v", height=300, l
         }
     }, width='stretch')
 
-def draw_static_line(df, x_col, y_col, color="#4682B4", height=300):
-    st.vega_lite_chart(df, {
-        'width': 'container',
-        'height': height,
-        'mark': {'type': 'line', 'color': color, 'point': True, 'tooltip': True},
-        'encoding': {
-            'x': {'field': x_col, 'type': 'nominal', 'title': None},
-            'y': {'field': y_col, 'type': 'quantitative', 'title': None}
-        },
-        'config': {'view': {'stroke': 'transparent'}, 'selection': {'grid': False}}
-    }, width='stretch')
 
 # ------------------------------------------------------------------
 # --- SIDEBAR E FILTRI ---
@@ -183,8 +174,6 @@ if sigle_selezionate:
 # ------------------------------------------------------------------
 
 st.subheader("Key Performance Indicators")
-
-# ATTENZIONE: richiede queries.py aggiornato a 5 valori (vedi nota in fondo)
 total_sales, avg_delivery, total_orders, avg_freight, avg_order_value = load_kpis(con, query_where)
 
 c1, c2, c3, c4, c5 = st.columns(5)
@@ -216,13 +205,7 @@ with col_cat:
                 'color': {
                     'field': 'Categoria',
                     'type': 'nominal',
-                    'legend': {
-                        'orient': 'bottom',
-                        'columns': 3,
-                        'labelFontSize': 15,
-                        'symbolSize': 100,
-                        'offset': 20
-                    }
+                    'legend': {'orient': 'bottom', 'columns': 3, 'labelFontSize': 15, 'symbolSize': 100, 'offset': 20}
                 }
             },
             'config': {'view': {'stroke': 'transparent'}}
@@ -238,14 +221,17 @@ with col_ordini:
         df_plot['Nome Stato'] = df_plot['Stato'].map(mappa_stati)
 
         fig = px.choropleth(
-            df_plot, locations='Stato', color='Ordini',
+            df_plot,
+            locations='Stato',
+            color='Ordini',
             geojson="https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson",
-            featureidkey="properties.sigla", scope="south america",
-            color_continuous_scale="YlOrRd", hover_name='Nome Stato'
+            featureidkey="properties.sigla",
+            scope="south america",
+            color_continuous_scale="YlOrRd",
+            hover_name='Nome Stato'
         )
         fig.update_layout(height=450, margin={"r": 0, "t": 0, "l": 0, "b": 0}, dragmode=False)
         fig.update_geos(projection_scale=1.5, center={'lat': -15, 'lon': -55}, visible=False)
-
         st.plotly_chart(fig, width='stretch', config={'displayModeBar': False, 'staticPlot': False})
 
 # ------------------------------------------------------------------
@@ -326,53 +312,43 @@ if user_query:
             'customer_id': 'ID Cliente',
             'order_id': 'ID Ordine',
             'product_id': 'ID Prodotto',
-
             'customer_city': 'Città',
             'customer_state': 'Stato',
             'product_category_name': 'Categoria Prodotto',
             'city': 'Città',
             'state': 'Stato',
             'category': 'Categoria',
-
             'order_purchase_timestamp': 'Data Acquisto',
             'year': 'Anno',
             'quarter': 'Trimestre',
             'month': 'Mese',
             'day': 'Giorno',
             'day_of_week': 'Giorno della Settimana',
-
             'price': 'Prezzo',
             'freight_value': 'Costo Spedizione',
-
             'total_revenue': 'Fatturato Totale',
             'revenue': 'Fatturato',
             'sum(price)': 'Fatturato Totale',
             'sum(T1.price)': 'Fatturato Totale',
             'sum(order_revenue)': 'Fatturato Totale',
-
             'total_orders': 'Totale Ordini',
             'order_count': 'Numero Ordini',
             'orders': 'Numero Ordini',
             'customer_count': 'Numero Clienti',
-
             'avg_order_value': 'Spesa Media',
             'average_order_value': 'Spesa Media',
             'avg(order_revenue)': 'Spesa Media',
             'avg_revenue': 'Spesa Media',
             'aov': 'Spesa Media',
-
             'avg_price': 'Prezzo Medio',
             'avg_delivery_time': 'Media Giorni Consegna',
             'avg(delivery_time_days)': 'Media Giorni Consegna',
-
             'avg_freight': 'Media Spese Spedizione',
             'avg(freight_value)': 'Media Spese Spedizione',
-
             'max_delivery_time': 'Consegna Massima (gg)',
             'min_delivery_time': 'Consegna Minima (gg)',
             'max_price': 'Prezzo Massimo',
             'min_price': 'Prezzo Minimo',
-
             'total_freight': 'Costo Spedizione Totale'
         }
 
@@ -381,16 +357,9 @@ if user_query:
         st.subheader("Risultato")
         if not df_ai.empty:
             format_dict = {}
-            if 'Fatturato Totale' in df_ai.columns:
-                format_dict['Fatturato Totale'] = f"{CURRENCY_SYMBOL} {{:,.2f}}"
-            if 'Fatturato' in df_ai.columns:
-                format_dict['Fatturato'] = f"{CURRENCY_SYMBOL} {{:,.2f}}"
-            if 'Prezzo' in df_ai.columns:
-                format_dict['Prezzo'] = f"{CURRENCY_SYMBOL} {{:,.2f}}"
-            if 'Costo Spedizione' in df_ai.columns:
-                format_dict['Costo Spedizione'] = f"{CURRENCY_SYMBOL} {{:,.2f}}"
-            if 'Spesa Media' in df_ai.columns:
-                format_dict['Spesa Media'] = f"{CURRENCY_SYMBOL} {{:,.2f}}"
+            for col in ['Fatturato Totale', 'Fatturato', 'Prezzo', 'Costo Spedizione', 'Spesa Media']:
+                if col in df_ai.columns:
+                    format_dict[col] = f"{CURRENCY_SYMBOL} {{:,.2f}}"
 
             st.dataframe(df_ai.style.format(format_dict), width='stretch')
         else:

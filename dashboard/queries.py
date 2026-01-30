@@ -20,8 +20,8 @@ def load_kpis(con, query_where):
                 SUM(f.price) AS order_revenue,
                 MAX(f.delivery_time_days) AS delivery_time_days,
                 SUM(f.freight_value) AS freight_value
-            FROM fact_sales f
-            JOIN dim_customers c ON f.customer_id = c.customer_id
+            FROM gold.fact_sales f
+            JOIN gold.dim_customers c ON f.customer_id = c.customer_id
             {query_where}
             GROUP BY f.order_id
         )
@@ -42,9 +42,9 @@ def load_category_data(con, query_where):
         SELECT
             p.product_category_name AS Categoria,
             SUM(f.price) AS Fatturato
-        FROM fact_sales f
-        JOIN dim_products p ON f.product_id = p.product_id
-        JOIN dim_customers c ON f.customer_id = c.customer_id
+        FROM gold.fact_sales f
+        JOIN gold.dim_products p ON f.product_id = p.product_id
+        JOIN gold.dim_customers c ON f.customer_id = c.customer_id
         {query_where}
         GROUP BY Categoria
         ORDER BY Fatturato DESC
@@ -59,8 +59,8 @@ def load_state_data(con, query_where):
         SELECT
             c.customer_state AS Stato,
             COUNT(DISTINCT f.order_id) AS Ordini
-        FROM fact_sales f
-        JOIN dim_customers c ON f.customer_id = c.customer_id
+        FROM gold.fact_sales f
+        JOIN gold.dim_customers c ON f.customer_id = c.customer_id
         {query_where}
         GROUP BY Stato
         ORDER BY Ordini DESC
@@ -78,8 +78,8 @@ def load_shipping_time_data(con, query_where):
                 f.order_id,
                 c.customer_state AS Stato,
                 MAX(f.delivery_time_days) AS delivery_time_days
-            FROM fact_sales f
-            JOIN dim_customers c ON f.customer_id = c.customer_id
+            FROM gold.fact_sales f
+            JOIN gold.dim_customers c ON f.customer_id = c.customer_id
             {query_where}
             GROUP BY f.order_id, c.customer_state
         )
@@ -102,8 +102,8 @@ def load_avg_shipping_data(con, query_where):
                 f.order_id,
                 c.customer_state AS Stato,
                 SUM(f.freight_value) AS freight_value
-            FROM fact_sales f
-            JOIN dim_customers c ON f.customer_id = c.customer_id
+            FROM gold.fact_sales f
+            JOIN gold.dim_customers c ON f.customer_id = c.customer_id
             {query_where}
             GROUP BY f.order_id, c.customer_state
         )
@@ -116,7 +116,7 @@ def load_avg_shipping_data(con, query_where):
     """).df()
 
 # -------------------------------------------------------------------
-# TREND MENSILE (fatturato) - robusto: usa solo fact_sales (no join dim_time)
+# TREND MENSILE (fatturato)
 # Nota: somma price a grain item => corretto per fatturato
 # -------------------------------------------------------------------
 def load_trend_data(con, query_where):
@@ -124,23 +124,23 @@ def load_trend_data(con, query_where):
         SELECT
             strftime(CAST(f.order_purchase_timestamp AS TIMESTAMP), '%Y-%m') AS Periodo,
             SUM(f.price) AS Fatturato
-        FROM fact_sales f
-        JOIN dim_customers c ON f.customer_id = c.customer_id
+        FROM gold.fact_sales f
+        JOIN gold.dim_customers c ON f.customer_id = c.customer_id
         {query_where}
         GROUP BY 1
         ORDER BY 1
     """).df()
 
 # -------------------------------------------------------------------
-# STAGIONALITÀ SETTIMANALE (fatturato) - robusto: usa solo fact_sales
+# STAGIONALITÀ SETTIMANALE (fatturato)
 # -------------------------------------------------------------------
 def load_weekly_seasonality(con, query_where):
     return con.execute(f"""
         SELECT
             strftime(CAST(f.order_purchase_timestamp AS TIMESTAMP), '%A') AS day_of_week,
             SUM(f.price) AS Fatturato
-        FROM fact_sales f
-        JOIN dim_customers c ON f.customer_id = c.customer_id
+        FROM gold.fact_sales f
+        JOIN gold.dim_customers c ON f.customer_id = c.customer_id
         {query_where}
         GROUP BY 1
         ORDER BY CASE
